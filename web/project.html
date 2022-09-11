@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor</title>
+
+    <!-- <script src="https://cdn.jsdelivr.net/gh/lunu-bounir/tree.js/tree.js"></script> -->
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lunu-bounir/tree.js/tree.css"> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"
+        integrity="sha512-7O5pXpc0oCRrxk8RUfDYFgn0nO1t+jLuIOQdOMRp4APB7uZ4vSjspzp5y6YDtDs4VzUSTbWzBFZ/LKJhnyFOKw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/context-menu.css">
+
+</head>
+
+
+<body>
+    <div class="container">
+        <div class="file-tree-container"></div>
+        <div class="editor-container">
+            <div id="editor" class="editor"></div>
+            <div class="output-container" style="display: none;">
+                <button style="position: absolute; top:0px; right:0px;"
+                    onclick="document.querySelector('.output-container').style.display='none'"
+                    >close</button>
+                <div id="output"></div>
+            </div>
+        </div>
+    </div>
+
+    <button style="position: fixed; top:0px;right:0px"onclick="RUN()">Run</button>
+</body>
+
+<script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/context-menu.js"></script>
+<script src="/static/js/tree.js"></script>
+<script>
+    const API = new SS_Project_API("{{ user }}", "{{ job }}")
+    const TREE = new Tree(document.querySelector('.file-tree-container'))
+</script>
+<script type="module" src="/static/js/main.js"></script>
+
+</html>
