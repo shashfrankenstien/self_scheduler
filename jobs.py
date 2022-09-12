@@ -22,6 +22,9 @@ def main():
 class Job:
 
     def __init__(self, job_name, user_name):
+        if user_name!='sgop':
+            raise Exception("Found it")
+
         self.name = job_name
         self.user = user_name
         self.job_path = os.path.join(JOBS_STASH, self.user, self.name)
