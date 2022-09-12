@@ -4,13 +4,15 @@ import traceback
 from flask import Flask, send_file, request
 
 from capture import print_capture
-from jobs import Job
+from project import Project
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 
 app = Flask(__name__)
+
+TEST_USER = 'sgop'
 
 
 def fillTemplate(htmlText, **kwargs):
@@ -49,37 +51,37 @@ def static_files(folder, filename):
 
 
 # Project API
-@app.route("/<user>/<job>", methods=['GET'])
-def open_project(user, job):
-	Job(job, user) # basic file structure init
-	return openHTML(os.path.join(CWD, 'web', 'project.html'), user=user, job=job)
+@app.route("/project/<project_name>", methods=['GET'])
+def open_project(project_name):
+	Project(project_name, user_name=TEST_USER) # basic file structure init
+	return openHTML(os.path.join(CWD, 'web', 'project.html'), project_name=project_name)
 
 
-@app.route("/<user>/<job>/tree", methods=['GET'])
-def tree(user, job):
-	J = Job(job, user)
+@app.route("/project/<project_name>/tree", methods=['GET'])
+def tree(project_name):
+	J = Project(project_name, user_name=TEST_USER)
 	return json.dumps({'success': J.struct_to_dict()})
 
 
-@app.route("/<user>/<job>/file/save", methods=['POST'])
-def save_file(user, job):
-	J = Job(job, user)
+@app.route("/project/<project_name>/file/save", methods=['POST'])
+def save_file(project_name):
+	J = Project(project_name, user_name=TEST_USER)
 	data = request.json
 	res = J.save_file(data['path'], data['src'])
 	return json.dumps({'success': res})
 
 
-@app.route("/<user>/<job>/file/delete", methods=['POST'])
-def delete_file(user, job):
-	J = Job(job, user)
+@app.route("/project/<project_name>/file/delete", methods=['POST'])
+def delete_file(project_name):
+	J = Project(project_name, user_name=TEST_USER)
 	data = request.json
 	res = J.delete_file(data['path'])
 	return json.dumps({'success': res})
 
 
-@app.route("/<user>/<job>/file/new", methods=['POST'])
-def new_file(user, job):
-	J = Job(job, user)
+@app.route("/project/<project_name>/file/new", methods=['POST'])
+def new_file(project_name):
+	J = Project(project_name, user_name=TEST_USER)
 	data = request.json
 	name = str(data['name']).strip()
 	if not name.endswith(".py"):
@@ -89,15 +91,15 @@ def new_file(user, job):
 	return json.dumps({'success': res})
 
 
-@app.route("/<user>/<job>/run", methods=['GET'])
-def run(user, job):
+@app.route("/project/<project_name>/run", methods=['GET'])
+def run(project_name):
 	msgs = []
 	def _cb(msg):
 		msgs.append(str(msg))
 
 	with print_capture(_cb):
 		try:
-			J = Job(job, user)
+			J = Project(project_name, user_name=TEST_USER)
 			print(J.run())
 		except:
 			traceback.print_exc()

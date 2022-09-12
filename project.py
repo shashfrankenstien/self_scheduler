@@ -6,12 +6,12 @@ import fnmatch, glob
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 
-default_config = {'jobs_stash': 'jobs'}
+default_config = {'projects_stash': 'projects'}
 config = configparser.ConfigParser(defaults=default_config)
 config.read(os.path.join(CWD, 'config.ini'))
 
 
-JOBS_STASH = os.path.join(CWD, config['DEFAULT']['jobs_stash'])
+PROJECTS_STASH = os.path.join(CWD, config['DEFAULT']['projects_stash'])
 SRC_MAIN_STARTER = '''
 
 def main():
@@ -19,20 +19,20 @@ def main():
 
 '''
 
-class Job:
+class Project:
 
-    def __init__(self, job_name, user_name):
+    def __init__(self, project_name, user_name):
         if user_name!='sgop':
             raise Exception("Found it")
 
-        self.name = job_name
+        self.name = project_name
         self.user = user_name
-        self.job_path = os.path.join(JOBS_STASH, self.user, self.name)
-        self.src_path = os.path.join(self.job_path, 'src')
+        self.project_path = os.path.join(PROJECTS_STASH, self.user, self.name)
+        self.src_path = os.path.join(self.project_path, 'src')
         if not os.path.isdir(self.src_path):
             os.makedirs(self.src_path)
 
-        self.config_path = os.path.join(self.job_path, 'config.ini')
+        self.config_path = os.path.join(self.project_path, 'config.ini')
         self.config = configparser.ConfigParser()
         self._prep_config()
         self._prep_src()
@@ -151,7 +151,7 @@ class Job:
 
 
 if __name__ == '__main__':
-    j = Job("test", "sgop")
+    j = Project("test", "sgop")
     j.run()
     for d in j.struct_to_dict():
         print(d)

@@ -21,13 +21,12 @@ const modFetch = async (endpoint, method, body) => {
 
 
 class SS_Project_API {
-    constructor(user, job) {
-        this.user = user
-        this.job = job
+    constructor(project_name) {
+        this.project_name = project_name
     }
 
     loadTree(treeObj) {
-        modFetch(`/${this.user}/${this.job}/tree`, "GET").then(res=>{
+        modFetch(`/project/${this.project_name}/tree`, "GET").then(res=>{
             treeObj.showTree(res);
         }).catch(err=>{
             alert(err)
@@ -35,7 +34,7 @@ class SS_Project_API {
     }
 
     newFile(path, name) {
-        return modFetch(`/${this.user}/${this.job}/file/new`, "POST", {
+        return modFetch(`/project/${this.project_name}/file/new`, "POST", {
             path,
             name
         }).then(res=>{
@@ -45,12 +44,12 @@ class SS_Project_API {
 
     saveFile(path, src) {
         console.log("save", path)
-        return modFetch(`/${this.user}/${this.job}/file/save`, "POST", {path, src})
+        return modFetch(`/project/${this.project_name}/file/save`, "POST", {path, src})
     }
 
     deleteFile(path) {
         console.log("delete", path)
-        return modFetch(`/${this.user}/${this.job}/file/delete`, "POST", {
+        return modFetch(`/project/${this.project_name}/file/delete`, "POST", {
             path,
         }).then(res=>{
             return res
@@ -58,7 +57,7 @@ class SS_Project_API {
     }
 
     run() {
-        return modFetch(`/${this.user}/${this.job}/run`, "GET")
+        return modFetch(`/project/${this.project_name}/run`, "GET")
     }
 }
 
