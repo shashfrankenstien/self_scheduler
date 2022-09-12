@@ -92,6 +92,8 @@ window.addEventListener('load', (event) => {
         }
     })
 
+    document.getElementById('run-btn').addEventListener('click', ()=>RUN())
+
     TREE.setOptions({
         // navigate: true, // allow navigate with ArrowUp and ArrowDown
         file_contextmenu,
