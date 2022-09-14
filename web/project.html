@@ -12,6 +12,7 @@
 
     <link rel="stylesheet" href="/static/css/common.css">
     <link rel="stylesheet" href="/static/css/context-menu.css">
+    <link rel="stylesheet" href="/static/css/file-tree.css">
 
 </head>
 
@@ -36,10 +37,10 @@
 <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
 <script src="/static/js/api.js"></script>
 <script src="/static/js/context-menu.js"></script>
-<script src="/static/js/tree.js"></script>
+<script src="/static/js/file-tree.js"></script>
 <script>
     const API = new SS_Project_API("{{ project_name }}")
-    const TREE = new Tree(document.querySelector('.file-tree-container'))
+    const TREE = new FileTree(document.querySelector('.file-tree-container'))
 </script>
 <script type="module" src="/static/js/main.js"></script>
 

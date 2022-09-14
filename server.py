@@ -4,7 +4,7 @@ import traceback
 from flask import Flask, send_file, request
 
 from capture import print_capture
-from project import Project
+from project import Project, SUPPORTED_LANGUAGES
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 
@@ -84,7 +84,9 @@ def new_file(project_name):
 	J = Project(project_name, user_name=TEST_USER)
 	data = request.json
 	name = str(data['name']).strip()
-	if not name.endswith(".py"):
+
+	ext = os.path.splitext(name)[-1]
+	if ext not in SUPPORTED_LANGUAGES:
 		raise NotImplementedError("support for file type not implemented")
 
 	res = J.new_file(data['path'], name)
@@ -98,11 +100,9 @@ def run(project_name):
 		msgs.append(str(msg))
 
 	with print_capture(_cb):
-		try:
-			J = Project(project_name, user_name=TEST_USER)
-			print(J.run())
-		except:
-			traceback.print_exc()
+		J = Project(project_name, user_name=TEST_USER)
+		J.run()
+
 	return json.dumps({'success': ''.join(msgs)})
 
 

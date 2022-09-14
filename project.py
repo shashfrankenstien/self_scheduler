@@ -2,6 +2,7 @@ import os, sys
 import configparser
 import importlib
 import fnmatch, glob
+import traceback
 
 
 CWD = os.path.dirname(os.path.abspath(__file__))
@@ -11,13 +12,19 @@ config = configparser.ConfigParser(defaults=default_config)
 config.read(os.path.join(CWD, 'config.ini'))
 
 
-PROJECTS_STASH = os.path.join(CWD, config['DEFAULT']['projects_stash'])
-SRC_MAIN_STARTER = '''
+PROJECTS_STASH = os.path.realpath(config['DEFAULT']['projects_stash'])
+SRC_MAIN_PYTHON_STARTER = '''
 
 def main():
     pass
 
 '''
+
+SUPPORTED_LANGUAGES = {
+    ".py": "python",
+    ".js": "javascript",
+}
+
 
 class Project:
 
@@ -52,7 +59,31 @@ class Project:
         main_path = os.path.join(self.src_path, 'main.py')
         if not os.path.isfile(main_path):
             with open(main_path, 'w') as m:
-                m.write(SRC_MAIN_STARTER)
+                m.write(SRC_MAIN_PYTHON_STARTER)
+
+
+    def _get_file_dict(self, name, path):
+        ext = os.path.splitext(path)[-1]
+        out = {
+            'name': name,
+            'type': 'file',
+            'path': os.path.relpath(path, self.src_path),
+            'language': SUPPORTED_LANGUAGES.get(ext, ''),
+            'selected': (name == "main.py"),
+        }
+        with open(path, 'r') as file:
+            out['src'] = file.read()
+        return out
+
+
+    def _get_folder_dict(self, name, path):
+        return {
+            'name': name,
+            'type': 'folder',
+            'path': os.path.relpath(path, self.src_path),
+            'open': True, # open by default??
+            'children': self._children_to_list(path)
+        }
 
 
     def _children_to_list(self, path):
@@ -67,18 +98,14 @@ class Project:
                     break
             if ignore:
                 continue
-            child = {'name': name, 'path': os.path.relpath(f, self.src_path)}
+
             if os.path.isfile(f):
-                with open(f, 'r') as file:
-                    child['src'] = file.read()
-                if name == "main.py":
-                    child['selected'] = True
+                d.append(self._get_file_dict(name, f))
+
             elif os.path.isdir(f):
-                child['type'] = 'folder'
-                child['open'] = True # open by default??
-                child['children'] = self._children_to_list(f)
-            d.append(child)
+                d.append(self._get_folder_dict(name, f))
         return d
+
 
     def struct_to_dict(self):
         return [{
@@ -90,7 +117,7 @@ class Project:
         }]
 
 
-    def run(self):
+    def _run(self):
         curr_dir = os.getcwd()
         os.chdir(self.src_path)
         # caution: path[0] is reserved for script path (or '' in REPL)
@@ -120,6 +147,18 @@ class Project:
         return res
 
 
+    def run(self):
+        try:
+            self._run()
+        except:
+            err = traceback.format_exc()
+            err = err.replace(os.path.join(PROJECTS_STASH, self.user), '')
+            err = err.replace(PROJECTS_STASH, '')
+            err = err.replace(CWD, '')
+            print(err)
+
+
+
     def save_file(self, path, src):
         pp = os.path.join(self.src_path, path)
         with open(pp, 'w') as f:
@@ -131,7 +170,7 @@ class Project:
         pp = os.path.join(self.src_path, path)
         if os.path.isfile(pp):
             os.remove(pp)
-            return self.struct_to_dict()
+            return True #self.struct_to_dict()
         raise Exception(f"Path not found - {path}")
 
 
@@ -139,15 +178,14 @@ class Project:
         src = os.path.join(self.src_path, path)
         if not os.path.isdir(src):
             raise Exception(f"Path not found - {path}")
-        pp = os.path.join(src, name)
+        fpath = os.path.join(src, name)
 
-        if os.path.isfile(pp):
+        if os.path.isfile(fpath):
             raise Exception(f"File exists - {os.path.join(path, name)}")
 
-
-        with open(pp, 'w') as f:
+        with open(fpath, 'w') as f:
             f.write('\n')
-        return self.struct_to_dict()
+        return self._get_file_dict(name, fpath)
 
 
 if __name__ == '__main__':

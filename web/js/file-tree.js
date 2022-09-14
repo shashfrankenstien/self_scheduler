@@ -1,10 +1,8 @@
 
 
-
-class Tree {
+class FileTree {
     constructor(element, options) {
         this.element = element
-        this.data = []
         this.path_map = {}
         this.setOptions(options)
     }
@@ -42,7 +40,7 @@ class Tree {
 
     createNode(item, parent) {
         item.id = `${parent.id || "root"}-${item.name}`
-        item.level = (parent.level  + 1 || 0)
+        item.level = (parent.level + 1 || 0)
 
         let node = document.createElement('div')
         item.node = node
@@ -65,36 +63,39 @@ class Tree {
             ev.preventDefault()
             this._clicked(item)
         })
-        this.element.appendChild(node)
+        if (parent.node)
+            parent.node.after(node)
+        else
+            this.element.appendChild(node)
         this.path_map[item.path] = item
 
         if (item.selected === true)
             this._clicked(item)
+
+        return item
     }
 
 
     _showTree(data, parent) {
         parent = parent || {}
         for (const d of data) {
-            this.createNode(d, parent)
+            let item = this.createNode(d, parent)
             if (d.type=="folder") {
-                this._showTree(d.children || [], d)
+                this._showTree(d.children || [], item)
             }
         }
     }
 
     showTree(data) {
-        this.data = data
+        // this.data = data
         this.element.innerHTML = "" // delete existing tree
         this._showTree(data)
-        setTimeout(()=>console.log(this.data), 500)
+        setTimeout(()=>console.log(data), 500)
     }
 
-
-    resetSrc(path, src) {
-        this.path_map[path].src = src
+    getItemFromPath(path) {
+        return this.path_map[path]
     }
-
 
     _openFolder(item) {
         item.children.forEach(i=>{
@@ -115,17 +116,13 @@ class Tree {
     }
 
     _selectFile(item) {
-        const _unselectAll = (items) => {
-            for (const d of items) {
-                if (d.type=='folder') {
-                    _unselectAll(d.children)
-                } else {
-                    d.node.classList.remove('selected')
-                }
+        for (const p in this.path_map) {
+            const d = this.path_map[p]
+            if (d.type!='folder') {
+                d.node.classList.remove('selected')
             }
         }
 
-        _unselectAll(this.data)
         item.node.classList.add('selected')
         item.selected = true
     }
@@ -146,4 +143,32 @@ class Tree {
         }
         this.onclick(item)
     }
+
+
+    // other operations
+
+    markItemDirty(item) {
+        if (item.dirty !== true) {
+            item.dirty = true
+            item.node.innerHTML = item.node.innerHTML + " *"
+            item.node.classList.add('dirty')
+        }
+    }
+
+    markItemClean(item) {
+        if (item.dirty === true) {
+            item.dirty = false
+
+            item.node.classList.remove('dirty')
+            let html = item.node.innerHTML
+            if (html.endsWith("*"))
+                item.node.innerHTML = html.substring(0, html.length - 2)
+        }
+    }
+
+    delete(item) {
+        item.node.remove()
+        delete this.path_map[item.path]
+    }
+
 }

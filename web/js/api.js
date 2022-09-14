@@ -26,10 +26,8 @@ class SS_Project_API {
     }
 
     loadTree(treeObj) {
-        modFetch(`/project/${this.project_name}/tree`, "GET").then(res=>{
+        return modFetch(`/project/${this.project_name}/tree`, "GET").then(res=>{
             treeObj.showTree(res);
-        }).catch(err=>{
-            alert(err)
         })
     }
 

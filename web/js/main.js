@@ -18,6 +18,8 @@ require(["vs/editor/editor.main"], () => {
         automaticLayout: true,
     });
 
+    window.editor.getModel().dispose() // remove default model
+
 });
 
 
@@ -27,8 +29,9 @@ const folder_contextmenu = (ev, item, treeObj) => {
 
     menu.addNewOption("New File", ()=>{
         const name = prompt("File Name:")
-        API.newFile(item.path, name).then(struct=>{
-            treeObj.showTree(struct)
+        API.newFile(item.path, name).then(res=>{
+            console.log(res)
+            TREE.createNode(res, item)
         })
         menu.close()
     })
@@ -55,8 +58,11 @@ const file_contextmenu = (ev, item, treeObj) => {
         menu.close()
     })
     menu.addNewOption("Delete", ()=>{
-        API.deleteFile(item.path).then(struct=>{
-            treeObj.showTree(struct)
+        API.deleteFile(item.path).then(res=>{
+            if (item.model) {
+                item.model.dispose()
+            }
+            TREE.delete(item)
         })
         menu.close()
     })
@@ -82,7 +88,9 @@ window.addEventListener('load', (event) => {
             const path = editorElem.getAttribute('data-path')
             const src = window.editor.getValue()
             API.saveFile(path, src).then(res=>{
-                TREE.resetSrc(path, src)
+                const item = TREE.getItemFromPath(path)
+                item.src = src
+                TREE.markItemClean(item)
             })
         }
 
@@ -100,13 +108,17 @@ window.addEventListener('load', (event) => {
         folder_contextmenu,
         onclick: (item)=>{
             if (item.type!=='folder') {
-                const model = window.editor.getModel()
-                model.setValue(item.src)
-                model.tree_item = item
-                monaco.editor.setModelLanguage(model, "python")
                 if (item.path) {
                     editorElem.setAttribute('data-path', item.path)
                 }
+
+                if (!item.model)
+                    item.model = monaco.editor.createModel(item.src, item.language)
+
+                item.model.onDidChangeContent(evt=>{
+                    TREE.markItemDirty(item)
+                })
+                window.editor.setModel(item.model)
             }
         }
     });
