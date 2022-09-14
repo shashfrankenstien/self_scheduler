@@ -31,7 +31,7 @@ const folder_contextmenu = (ev, item, treeObj) => {
         const name = prompt("File Name:")
         API.newFile(item.path, name).then(res=>{
             console.log(res)
-            TREE.createNode(res, item)
+            TREE.newItem(res, item)
         })
         menu.close()
     })
@@ -62,7 +62,7 @@ const file_contextmenu = (ev, item, treeObj) => {
             if (item.model) {
                 item.model.dispose()
             }
-            TREE.delete(item)
+            TREE.deleteItem(item)
         })
         menu.close()
     })

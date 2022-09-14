@@ -44,7 +44,7 @@ html, body {
 
 .output-container {
     flex:1;
-    color: var(--tree-node-fg-color);
+    background-color: var(--bg-color);
     color: var(--tree-node-fg-color);
     position: relative;
     overflow: hidden;

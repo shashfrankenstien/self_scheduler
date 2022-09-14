@@ -55,33 +55,32 @@ class FileTree {
         }
 
         if (item.type==='folder'){
-            item.node.addEventListener('contextmenu', (ev)=>this.options.folder_contextmenu(ev, item, this));
+            node.addEventListener('contextmenu', (ev)=>this.options.folder_contextmenu(ev, item, this));
         } else {
-            item.node.addEventListener('contextmenu', (ev)=>this.options.file_contextmenu(ev, item, this));
+            node.addEventListener('contextmenu', (ev)=>this.options.file_contextmenu(ev, item, this));
         }
-        node.addEventListener('click', (ev) => {
-            ev.preventDefault()
-            this._clicked(item)
+        node.addEventListener('mousedown', (ev) => {
+            if (ev.button===0) { // left-click
+                ev.preventDefault()
+                this._clicked(item)
+            }
         })
-        if (parent.node)
-            parent.node.after(node)
-        else
-            this.element.appendChild(node)
+
+        this.element.appendChild(node)
+        item.node = node
         this.path_map[item.path] = item
 
         if (item.selected === true)
             this._clicked(item)
-
-        return item
     }
 
 
     _showTree(data, parent) {
         parent = parent || {}
         for (const d of data) {
-            let item = this.createNode(d, parent)
+            this.createNode(d, parent)
             if (d.type=="folder") {
-                this._showTree(d.children || [], item)
+                this._showTree(d.children || [], d)
             }
         }
     }
@@ -146,6 +145,16 @@ class FileTree {
 
 
     // other operations
+    newItem(item, parent) {
+        this.createNode(item, parent)
+        if (parent.node)
+            parent.node.after(item.node)
+    }
+
+    deleteItem(item) {
+        item.node.remove()
+        delete this.path_map[item.path]
+    }
 
     markItemDirty(item) {
         if (item.dirty !== true) {
@@ -165,10 +174,4 @@ class FileTree {
                 item.node.innerHTML = html.substring(0, html.length - 2)
         }
     }
-
-    delete(item) {
-        item.node.remove()
-        delete this.path_map[item.path]
-    }
-
 }
