@@ -55,9 +55,9 @@ class FileTree {
         }
 
         if (item.type==='folder'){
-            node.addEventListener('contextmenu', (ev)=>this.options.folder_contextmenu(ev, item, this));
+            node.addEventListener('contextmenu', (ev)=>this.options.folder_contextmenu(ev, item));
         } else {
-            node.addEventListener('contextmenu', (ev)=>this.options.file_contextmenu(ev, item, this));
+            node.addEventListener('contextmenu', (ev)=>this.options.file_contextmenu(ev, item));
         }
         node.addEventListener('mousedown', (ev) => {
             if (ev.button===0) { // left-click
@@ -97,21 +97,25 @@ class FileTree {
     }
 
     _openFolder(item) {
+        item.open = true
         item.children.forEach(i=>{
             i.node.style.display = ''
             if (i.type==='folder' && i.open) {
                 this._openFolder(i)
             }
         })
+        item.node.innerHTML = this.getDisplay(item)
     }
 
     _closeFolder(item) {
+        item.open = false
         item.children.forEach(i=>{
             i.node.style.display = 'none'
             if (i.type==='folder' && i.open) {
                 this._closeFolder(i)
             }
         })
+        item.node.innerHTML = this.getDisplay(item)
     }
 
     _selectFile(item) {
@@ -129,14 +133,11 @@ class FileTree {
     _clicked(item) {
         if (item.type==='folder') {
             if(item.open === true) {
-                item.open = false
                 this._closeFolder(item)
             } else {
-                item.open = true
                 this._openFolder(item)
             }
 
-            item.node.innerHTML = this.getDisplay(item)
         } else {
             this._selectFile(item)
         }
@@ -149,6 +150,12 @@ class FileTree {
         this.createNode(item, parent)
         if (parent.node)
             parent.node.after(item.node)
+
+        if (parent.children)
+            parent.children.push(item)
+
+        if (parent.type==='folder') // duh, it is!
+            this._openFolder(parent)
     }
 
     deleteItem(item) {

@@ -1,18 +1,11 @@
 import os, sys
-import configparser
 import importlib
 import fnmatch, glob
 import traceback
 
-
-CWD = os.path.dirname(os.path.abspath(__file__))
-
-default_config = {'projects_stash': 'projects'}
-config = configparser.ConfigParser(defaults=default_config)
-config.read(os.path.join(CWD, 'config.ini'))
+from .base import DB
 
 
-PROJECTS_STASH = os.path.realpath(config['DEFAULT']['projects_stash'])
 SRC_MAIN_PYTHON_STARTER = '''
 
 def main():
@@ -26,36 +19,56 @@ SUPPORTED_LANGUAGES = {
 }
 
 
-class Project:
 
-    def __init__(self, project_name, user_name):
-        if user_name!='sgop':
-            raise Exception("Found it")
+def handler(_exception_type, _value, t):
+    # extract the stack summary
+    summary = traceback.extract_tb(t)
 
-        self.name = project_name
-        self.user = user_name
-        self.project_path = os.path.join(PROJECTS_STASH, self.user, self.name)
+    # replace file names for each frame summary
+    for frame_summary in summary:
+        filename = frame_summary.filename
+        frame_summary.filename = os.path.relpath(filename)
+
+    # rebuild the traceback
+    print(''.join(traceback.format_list(traceback.StackSummary.from_list(summary))), file=sys.stderr)
+
+
+
+
+
+
+class Project(DB):
+
+    def __init__(self, workspace_path, db_path, user, project_id, project_name):
+        super().__init__(db_path)
+        self.workspace_path = workspace_path
+        # if user.first_name!='sgop':
+        #     raise Exception("Found it")
+
+        self.project_id = project_id
+        self.project_name = project_name
+        self.user = user
+        self.project_path = os.path.join(self.workspace_path, self.user.email, self.project_name)
         self.src_path = os.path.join(self.project_path, 'src')
+        self._prep_src()
+
+        # self.config_path = os.path.join(self.project_path, 'config.ini')
+        # self.config = configparser.ConfigParser()
+        # self._prep_config()
+
+    # def _prep_config(self):
+    #     self.config.read(self.config_path)
+    #     if 'schedule' not in self.config:
+    #         self.config.add_section('schedule')
+    #         self.config['schedule']['every'] = ''
+    #         self.config['schedule']['at'] = ''
+    #         with open(self.config_path, 'w') as c:
+    #             self.config.write(c)
+
+    def _prep_src(self):
         if not os.path.isdir(self.src_path):
             os.makedirs(self.src_path)
 
-        self.config_path = os.path.join(self.project_path, 'config.ini')
-        self.config = configparser.ConfigParser()
-        self._prep_config()
-        self._prep_src()
-
-
-    def _prep_config(self):
-        self.config.read(self.config_path)
-        if 'schedule' not in self.config:
-            self.config.add_section('schedule')
-            self.config['schedule']['every'] = ''
-            self.config['schedule']['at'] = ''
-            with open(self.config_path, 'w') as c:
-                self.config.write(c)
-
-
-    def _prep_src(self):
         main_path = os.path.join(self.src_path, 'main.py')
         if not os.path.isfile(main_path):
             with open(main_path, 'w') as m:
@@ -109,7 +122,7 @@ class Project:
 
     def struct_to_dict(self):
         return [{
-            'name': f'{self.user}/{self.name}',
+            'name': f'{self.user.email}/{self.name}',
             'path':'',
             'type': 'folder',
             'children': self._children_to_list(self.src_path),
@@ -127,7 +140,7 @@ class Project:
         # importlib.invalidate_caches()
         module = importlib.import_module('main')
         # importlib.reload(module)
-        print("> imported", module.__name__, "from", os.path.join(self.user, self.name))
+        print("> imported", module.__name__, "from", os.path.join(self.user.email, self.name))
 
         res = module.main()
         print("> done")
@@ -152,11 +165,24 @@ class Project:
             self._run()
         except:
             err = traceback.format_exc()
-            err = err.replace(os.path.join(PROJECTS_STASH, self.user), '')
-            err = err.replace(PROJECTS_STASH, '')
-            err = err.replace(CWD, '')
+            err = err.replace(os.path.join(self.workspace_path, self.user.email), '')
+            err = err.replace(self.workspace_path, '')
+            # err = err.replace(CWD, '')
             print(err)
 
+
+    def new_file(self, path, name):
+        src = os.path.join(self.src_path, path)
+        if not os.path.isdir(src):
+            raise Exception(f"Path not found - {path}")
+        fpath = os.path.join(src, name)
+
+        if os.path.isfile(fpath):
+            raise Exception(f"File exists - {os.path.join(path, name)}")
+
+        with open(fpath, 'w') as f:
+            f.write('\n')
+        return self._get_file_dict(name, fpath)
 
 
     def save_file(self, path, src):
@@ -174,22 +200,14 @@ class Project:
         raise Exception(f"Path not found - {path}")
 
 
-    def new_file(self, path, name):
+    def new_folder(self, path, name):
         src = os.path.join(self.src_path, path)
         if not os.path.isdir(src):
             raise Exception(f"Path not found - {path}")
         fpath = os.path.join(src, name)
 
-        if os.path.isfile(fpath):
-            raise Exception(f"File exists - {os.path.join(path, name)}")
+        if os.path.isdir(fpath):
+            raise Exception(f"Folder exists - {os.path.join(path, name)}")
 
-        with open(fpath, 'w') as f:
-            f.write('\n')
-        return self._get_file_dict(name, fpath)
-
-
-if __name__ == '__main__':
-    j = Project("test", "sgop")
-    j.run()
-    for d in j.struct_to_dict():
-        print(d)
+        os.makedirs(fpath)
+        return self._get_folder_dict(name, fpath)

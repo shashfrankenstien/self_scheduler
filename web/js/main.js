@@ -23,20 +23,28 @@ require(["vs/editor/editor.main"], () => {
 });
 
 
-const folder_contextmenu = (ev, item, treeObj) => {
+const folder_contextmenu = (ev, item) => {
     ev.preventDefault();
     let menu = new ContextMenu(ev.pageX, ev.pageY)
 
     menu.addNewOption("New File", ()=>{
         const name = prompt("File Name:")
-        API.newFile(item.path, name).then(res=>{
-            console.log(res)
-            TREE.newItem(res, item)
-        })
+        if (name) {
+            API.newFile(item.path, name).then(res=>{
+                console.log(res)
+                TREE.newItem(res, item)
+            })
+        }
         menu.close()
     })
     menu.addNewOption("New Folder", ()=>{
-        console.log(item.path)
+        const name = prompt("Folder Name:")
+        if (name) {
+            API.newFolder(item.path, name).then(res=>{
+                console.log(res)
+                TREE.newItem(res, item)
+            })
+        }
         menu.close()
     })
     if (item.path && item.path!=="/") {
@@ -49,7 +57,7 @@ const folder_contextmenu = (ev, item, treeObj) => {
 };
 
 
-const file_contextmenu = (ev, item, treeObj) => {
+const file_contextmenu = (ev, item) => {
     ev.preventDefault();
     let menu = new ContextMenu(ev.pageX, ev.pageY)
 
@@ -58,12 +66,14 @@ const file_contextmenu = (ev, item, treeObj) => {
         menu.close()
     })
     menu.addNewOption("Delete", ()=>{
-        API.deleteFile(item.path).then(res=>{
-            if (item.model) {
-                item.model.dispose()
-            }
-            TREE.deleteItem(item)
-        })
+        if (confirm(`Are you sure you want to delete ${item.name}?`)) {
+            API.deleteFile(item.path).then(res=>{
+                if (item.model) {
+                    item.model.dispose()
+                }
+                TREE.deleteItem(item)
+            })
+        }
         menu.close()
     })
     menu.open()

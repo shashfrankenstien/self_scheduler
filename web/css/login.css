@@ -1,0 +1,42 @@
+body {
+    font-family: sans-serif;
+}
+.login-signup-box {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top:40px;
+    background-color: var(--editor-monokai-bg);
+    color: white;
+}
+.login-signup-box label,
+.login-signup-box input,
+.login-signup-box button,
+.login-signup-box h3 {
+    width: 60%;
+    padding: 5px;
+}
+.login-signup-box input {
+    margin: 10px;
+    background-color: var(--bg-color);
+    color: white;
+    border: 1px solid black;
+}
+.login-signup-box a,
+.login-signup-box button {
+    margin-top: 15px;
+    background-color: var(--editor-monokai-bg);
+    color: white;
+    cursor: pointer;
+}
+
+.login-signup-box button {
+    border: 1px solid grey;
+    background-color: var(--tree-node-bg-selected);
+    transition: 0.1s;
+}
+.login-signup-box button:hover {
+    width: 65%;
+}

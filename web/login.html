@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Scheduler Login</title>
+    <script src="https://cdn.jsdelivr.net/gh/shashfrankenstien/lib-modaljs@v0.1.1/lib-modal.min.js"></script>
+
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <div id="login-box" class="login-signup-box">
+        <h3>Login</h3>
+        <input type="email" name="email" placeholder="Email">
+        <input type="password" name="password" placeholder="Password">
+
+        <button type="submit" onclick="login()">Login</button>
+        <a href="#" onclick="showSignup()">Signup</a>
+    </div>
+
+    <div id="signup-box" class="login-signup-box">
+        <h3>Signup</h3>
+        <input type="text" name="first_name" placeholder="First Name">
+        <input type="text" name="last_name" placeholder="Last Name">
+        <input type="email" name="email" placeholder="Email">
+        <input type="password" name="password" placeholder="Password">
+        <input type="password" name="password2" placeholder="Retype Password">
+
+        <!-- <input type="submit" value="Submit"> -->
+        <button type="submit" onclick="signup()">Signup</button>
+        <a href="#" onclick="showLogin()">Login</a>
+    </div>
+</body>
+
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/login.js"></script>
+
+</html>
