@@ -39,31 +39,20 @@ def handler(_exception_type, _value, t):
 
 class Project(DB):
 
-    def __init__(self, workspace_path, db_path, user, project_id, project_name):
+    def __init__(self, workspace_path, db_path, user, project_id, name, name_hash, descr):
         super().__init__(db_path)
         self.workspace_path = workspace_path
         # if user.first_name!='sgop':
         #     raise Exception("Found it")
 
         self.project_id = project_id
-        self.project_name = project_name
+        self.name = name
+        self.name_hash = name_hash
+        self.descr = descr
         self.user = user
-        self.project_path = os.path.join(self.workspace_path, self.user.email, self.project_name)
-        self.src_path = os.path.join(self.project_path, 'src')
+        self.src_path = os.path.join(self.workspace_path, self.user.email, self.name)
         self._prep_src()
 
-        # self.config_path = os.path.join(self.project_path, 'config.ini')
-        # self.config = configparser.ConfigParser()
-        # self._prep_config()
-
-    # def _prep_config(self):
-    #     self.config.read(self.config_path)
-    #     if 'schedule' not in self.config:
-    #         self.config.add_section('schedule')
-    #         self.config['schedule']['every'] = ''
-    #         self.config['schedule']['at'] = ''
-    #         with open(self.config_path, 'w') as c:
-    #             self.config.write(c)
 
     def _prep_src(self):
         if not os.path.isdir(self.src_path):

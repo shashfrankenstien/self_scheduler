@@ -1,0 +1,106 @@
+body {
+    display: flex;
+    justify-content: center;
+}
+
+.profile-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50vw;
+    color: var(--tree-node-fg-color);
+    /* border: 1px solid var(--tree-node-fg-color); */
+}
+
+#profile-picture {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    margin: 20px;
+}
+
+#profile-projects-container {
+    position: relative;
+    width:100%;
+    max-width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    /* border: 1px solid var(--light-border-color); */
+}
+
+#profile-projects {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+#profile-projects .project {
+    width: 24vw;
+    height: 50px;
+    border: 1px solid var(--light-border-color);
+    border-radius: 10px;
+    margin-bottom: 1vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#profile-projects .project:hover {
+    background-color: var(--editor-monokai-bg);
+    border-color: transparent;
+}
+
+
+.top-right-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.top-right-btn:hover {
+    border: 1px solid var(--light-border-color);
+    background-color: var(--editor-monokai-bg);
+}
+
+
+#new-project-modal {
+    /* display: ; */
+    flex-direction: column;
+    align-items: center;
+    height: 70%;
+    width: 75%;
+}
+
+#new-project-modal input,
+#new-project-modal textarea,
+#new-project-modal button {
+    width: 100%;
+    padding: 5px;
+    margin: 10px;
+    background-color: var(--bg-color);
+    color: white;
+    border: 1px solid black;
+    resize: none;
+}
+
+#new-project-modal button {
+    margin-top: 15px;
+    color: white;
+    cursor: pointer;
+    border: 1px solid grey;
+    background-color: var(--tree-node-bg-selected);
+    transition: 0.1s;
+}
+
+#new-project-modal button:hover {
+    width: 105%;
+}

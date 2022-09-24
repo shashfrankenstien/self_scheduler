@@ -6,14 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor</title>
 
+    <script src="https://cdn.jsdelivr.net/gh/shashfrankenstien/lib-modaljs@v0.2.0/lib-modal.min.js"></script>
     <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/profile.css">
 
 </head>
 
 
 <body>
-        <a href="/project/test">TEST</a>
+        <!-- <a href="/project/test">TEST</a> -->
+    <div class="profile-container">
+        <img src="{{ face }}" alt="profile picture" id="profile-picture">
+        <span>{{ name }}</span>
+
+        <div id="logout-btn" class="top-right-btn" onclick="logout()">Logout</div>
+
+        <div id="profile-projects-container">
+            <h2>Projects</h2>
+            <div class="top-right-btn" onclick="newProjectModal.open()">New</div>
+
+            <div id="profile-projects">
+                <!-- <div class="project">
+                    Dummy Proj 1
+                </div>
+                <div class="project">
+                    Dummy Proj 2
+                </div>
+                <div class="project">
+                    Dummy Proj 3
+                </div> -->
+
+
+            </div>
+        </div>
+    </div>
 </body>
 
+<div id="new-project-modal" style="display: none;">
+    <input type="text" name="project_name" placeholder="Project Name">
+    <!-- <input type="text" name="project_name" placeholder="Project Name"> -->
+    <textarea name="project_descr" cols="30" rows="10" placeholder="Project Description"></textarea>
+    <button type="submit" onclick="newProject()">Create</button>
+</div>
+
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/profile.js"></script>
 
 </html>

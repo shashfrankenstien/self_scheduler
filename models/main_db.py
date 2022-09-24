@@ -1,5 +1,6 @@
 import os
 import re
+import hashlib
 from datetime import datetime as dt
 
 from .base import DB
@@ -46,6 +47,8 @@ class SelfSchedulerDB(DB):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 name TEXT NOT NULL,
+                name_hash TEXT NOT NULL,
+                descr TEXT,
                 create_dt TEXT NOT NULL,
                 sched_every TEXT DEFAULT NULL,
                 sched_at TEXT DEFAULT NULL,
@@ -116,37 +119,51 @@ class User(DB):
         self.email = email
         self.salt = salt
 
+        hashed = hashlib.md5(self.email.strip().lower().encode()).hexdigest()
+        self.gravatar_url = f'https://www.gravatar.com/avatar/{hashed}?s=200&d=retro'
 
-    def project_exists(self, name):
+
+    def project_exists(self, name_hash):
         res = self.execute(f'''
-            SELECT project_id FROM projects WHERE user_id = {self.user_id} AND name = '{name}'
+            SELECT id FROM projects WHERE user_id = {self.user_id} AND name_hash = '{name_hash}'
         ''', fetch_one=True)
         return res is not None
 
 
-    def get_project(self, name):
-        res = self.execute(f'''SELECT id FROM projects WHERE user_id = {self.user_id} AND name = '{name}' ''', fetch_one=True)
+    def get_projects_dict(self):
+        projs = self.execute(f'''SELECT * FROM projects WHERE user_id = {self.user_id}''')
+        out = []
+        for res in projs:
+            out.append(res._asdict())
+        return out
+
+
+    def get_project(self, name_hash):
+        res = self.execute(f'''SELECT id, name, descr FROM projects WHERE user_id = {self.user_id} AND name_hash = '{name_hash}' ''', fetch_one=True)
         if res is None:
             raise Exception("Project not found")
 
-        return Project(self.workspace_path, self.db_path, self, res.id, name)
+        return Project(self.workspace_path, self.db_path, self, res.id, res.name, name_hash, res.descr)
 
 
-    def create_new_project(self, name):
-        if self.project_exists(name):
+    def create_new_project(self, name, descr):
+        name_hash = hashlib.md5(str(name).strip().encode()).hexdigest()
+
+        if self.project_exists(name_hash):
             raise Exception("Project already exists")
 
+        descr = descr.replace("'", "''")
         self.execute(f'''
             INSERT INTO projects (
-                user_id, name, create_dt
+                user_id, name, name_hash, descr, create_dt
             )
             VALUES (
-                '{self.user_id}', '{name}',
+                '{self.user_id}', '{name}', '{name_hash}', '{descr}',
                 '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}'
             );
         ''')
 
-        return self.get_project(name)
+        return self.get_project(name_hash)
 
 
 

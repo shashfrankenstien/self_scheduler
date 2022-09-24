@@ -36,7 +36,7 @@ def fillTemplate(htmlText, **kwargs):
 def openHTML(fileName, **kwargs):
 	with open(fileName, 'r') as f:
 		templateText = f.read()
-	return fillTemplate(templateText, **kwargs)
+	return make_response(fillTemplate(templateText, **kwargs))
 
 
 
@@ -89,7 +89,12 @@ def cookie_login_json(f):
 @app.route("/", methods=['GET'])
 @cookie_login
 def home():
-	return send_file(os.path.join(CWD, 'web', 'index.html'))
+	u = request.user
+	return openHTML(
+		os.path.join(CWD, 'web', 'index.html'),
+		face=u.gravatar_url,
+		name=f"{u.first_name} {u.last_name}",
+	)
 
 
 @app.route("/login", methods=['GET','POST'])
@@ -108,6 +113,7 @@ def login():
 
 @app.route("/signup", methods=['POST'])
 def signup():
+	raise NotImplementedError("Action is disabled")
 	data = json.loads(request.data)
 	print(data)
 	u = db.create_new_user(data.get('first_name'), data.get('last_name'), data.get('email'), data.get('password'))
@@ -121,31 +127,47 @@ def signup():
 
 
 @app.route("/static/<folder>/<filename>", methods=['GET'])
-@cookie_login
 def static_files(folder, filename):
 	return send_file(os.path.join(CWD, 'web', folder, filename))
 
 
 # Project API
-@app.route("/project/<project_name>", methods=['GET'])
+@app.route("/projects", methods=['GET'])
+@cookie_login_json
+def list_projects():
+	projs = request.user.get_projects_dict()
+	return json.dumps({'success': projs})
+
+
+@app.route("/project/new", methods=['POST'])
+@cookie_login_json
+def new_project():
+	data = json.loads(request.data)
+	project_name = data['name']
+	project_descr = data['descr']
+	P = request.user.create_new_project(project_name, project_descr)  # basic file structure init
+	return json.dumps({'success': P.name_hash})
+
+
+@app.route("/project/<project_hash>", methods=['GET'])
 @cookie_login
-def open_project(project_name):
-	request.user.get_project(project_name)  # basic file structure init
-	return openHTML(os.path.join(CWD, 'web', 'project.html'), project_name=project_name)
+def open_project(project_hash):
+	request.user.get_project(project_hash)  # basic file structure init
+	return openHTML(os.path.join(CWD, 'web', 'project.html'), project_hash=project_hash)
 
 
-@app.route("/project/<project_name>/tree", methods=['GET'])
+@app.route("/project/<project_hash>/tree", methods=['GET'])
 @cookie_login_json
-def tree(project_name):
-	J = request.user.get_project(project_name)
-	return json.dumps({'success': J.struct_to_dict()})
+def tree(project_hash):
+	P = request.user.get_project(project_hash)
+	return json.dumps({'success': P.struct_to_dict()})
 
 
 
-@app.route("/project/<project_name>/file/new", methods=['POST'])
+@app.route("/project/<project_hash>/file/new", methods=['POST'])
 @cookie_login_json
-def new_file(project_name):
-	J = request.user.get_project(project_name)
+def new_file(project_hash):
+	P = request.user.get_project(project_hash)
 	data = request.json
 	name = str(data['name']).strip()
 
@@ -153,52 +175,52 @@ def new_file(project_name):
 	if ext not in SUPPORTED_LANGUAGES:
 		raise NotImplementedError("support for file type not implemented")
 
-	res = J.new_file(data['path'], name)
+	res = P.new_file(data['path'], name)
 	return json.dumps({'success': res})
 
 
-@app.route("/project/<project_name>/file/save", methods=['POST'])
+@app.route("/project/<project_hash>/file/save", methods=['POST'])
 @cookie_login_json
-def save_file(project_name):
-	J = request.user.get_project(project_name)
+def save_file(project_hash):
+	P = request.user.get_project(project_hash)
 	data = request.json
-	res = J.save_file(data['path'], data['src'])
+	res = P.save_file(data['path'], data['src'])
 	return json.dumps({'success': res})
 
 
-@app.route("/project/<project_name>/file/delete", methods=['POST'])
+@app.route("/project/<project_hash>/file/delete", methods=['POST'])
 @cookie_login_json
-def delete_file(project_name):
-	J = request.user.get_project(project_name)
+def delete_file(project_hash):
+	P = request.user.get_project(project_hash)
 	data = request.json
-	res = J.delete_file(data['path'])
+	res = P.delete_file(data['path'])
 	return json.dumps({'success': res})
 
 
 
-@app.route("/project/<project_name>/folder/new", methods=['POST'])
+@app.route("/project/<project_hash>/folder/new", methods=['POST'])
 @cookie_login_json
-def new_folder(project_name):
-	J = request.user.get_project(project_name)
+def new_folder(project_hash):
+	P = request.user.get_project(project_hash)
 	data = request.json
 	name = str(data['name']).strip()
 
-	res = J.new_folder(data['path'], name)
+	res = P.new_folder(data['path'], name)
 	return json.dumps({'success': res})
 
 
 
 
-@app.route("/project/<project_name>/run", methods=['GET'])
+@app.route("/project/<project_hash>/run", methods=['GET'])
 @cookie_login_json
-def run(project_name):
+def run(project_hash):
 	msgs = []
 	def _cb(msg):
 		msgs.append(str(msg))
 
 	with print_capture(_cb):
-		J = request.user.get_project(project_name)
-		J.run()
+		P = request.user.get_project(project_hash)
+		P.run()
 
 	return json.dumps({'success': ''.join(msgs)})
 

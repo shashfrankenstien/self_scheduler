@@ -4,19 +4,28 @@ const LoginModal = new Modal(document.getElementById("login-box"), {
     width:'350px',
     height:'300px',
     noCloseBtn: true,
-    // noTransition:true,
-    containerColor: "transparent",
     noFade:true,
+    css: {
+        backgroundColor: "transparent",
+    }
 })
 const SignupModal = new Modal(document.getElementById("signup-box"), {
     displayStyle:'flex',
     width:'350px',
     height:'450px',
     noCloseBtn: true,
-    // noTransition:true,
-    containerColor: "transparent",
     noFade:true,
+    css: {
+        backgroundColor: "transparent",
+    }
 })
+const AlertModal = new ModalAlert({
+    css: {
+        backgroundColor: 'rgb(39,40,34)',
+        color: 'white',
+    }
+})
+
 LoginModal.open()
 
 function showSignup() {
@@ -35,7 +44,7 @@ function login() {
     const password = login_box.querySelector("[name='password']").value.trim()
     modFetch('/login', 'POST', {email, password}).then(data => {
         window.location = "/"
-    }).catch(err=>alert(err))
+    }).catch(err=>AlertModal.open(err))
 }
 
 
@@ -51,7 +60,7 @@ function signup() {
     if (password===password2) {
         modFetch('/signup', 'POST', {first_name, last_name, email, password}).then(data => {
             window.location = "/"
-        }).catch(err=>alert(err))
+        }).catch(err=>AlertModal.open(err))
     }
 }
 
