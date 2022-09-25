@@ -1,5 +1,8 @@
 // require is provided by loader.min.js.
-require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' }});
+
+require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs' }});
+// require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' }}); // slow :(
+
 require(["vs/editor/editor.main"], () => {
 
     fetch('https://cdn.jsdelivr.net/npm/monaco-themes@0.4.1/themes/Monokai.json')
@@ -11,7 +14,7 @@ require(["vs/editor/editor.main"], () => {
 
     const editorElem = document.getElementById('editor')
     window.editor = monaco.editor.create(editorElem, {
-        // language: 'python',
+        language: 'python',
         theme: 'vs-dark',
         fontSize: '11px',
         fontWeight: '400',
@@ -21,6 +24,37 @@ require(["vs/editor/editor.main"], () => {
     window.editor.getModel().dispose() // remove default model
 
 });
+
+
+
+const AlertModal = new ModalAlert({
+    css: {
+        backgroundColor: 'rgb(39,40,34)',
+        color: 'white',
+    }
+})
+
+
+function openOutputWindow() {
+    const outputElem = document.getElementById('output')
+    outputElem.innerText = ''
+    outputElem.parentElement.style.display = ''
+    return outputElem
+}
+
+function closeOutputWindow() {
+    document.querySelector('.output-container').style.display='none'
+    window.editor.focus()
+}
+
+
+
+const RUN = () => {
+    const outputElem = openOutputWindow()
+    API.run().then(res=>{
+        outputElem.innerText = res
+    })
+}
 
 
 const folder_contextmenu = (ev, item) => {
@@ -33,7 +67,7 @@ const folder_contextmenu = (ev, item) => {
             API.newFile(item.path, name).then(res=>{
                 console.log(res)
                 TREE.newItem(res, item)
-            })
+            }).catch(err=>AlertModal.open(err))
         }
         menu.close()
     })
@@ -43,13 +77,17 @@ const folder_contextmenu = (ev, item) => {
             API.newFolder(item.path, name).then(res=>{
                 console.log(res)
                 TREE.newItem(res, item)
-            })
+            }).catch(err=>AlertModal.open(err))
         }
         menu.close()
     })
     if (item.path && item.path!=="/") {
         menu.addNewOption("Delete", ()=>{
-            console.log(item.path)
+            if (confirm(`Are you sure you want to delete ${item.name}?`)) {
+                API.deleteFolder(item.path).then(res=>{
+                    TREE.deleteItem(item)
+                }).catch(err=>AlertModal.open(err))
+            }
             menu.close()
         })
     }
@@ -72,7 +110,7 @@ const file_contextmenu = (ev, item) => {
                     item.model.dispose()
                 }
                 TREE.deleteItem(item)
-            })
+            }).catch(err=>AlertModal.open(err))
         }
         menu.close()
     })
@@ -81,19 +119,12 @@ const file_contextmenu = (ev, item) => {
 
 
 
-const RUN = () => {
-    const outputElem = document.getElementById('output')
-    outputElem.innerText = ''
-    outputElem.parentElement.style.display = ''
-    API.run().then(res=>{
-        outputElem.innerText = res
-    })
-}
+
 
 window.addEventListener('load', (event) => {
     const editorElem = document.getElementById('editor')
     editorElem.addEventListener('keydown', (e)=>{
-        if (e.key==='s' && e.ctrlKey === true) {
+        if (e.key==='s' && e.ctrlKey === true) { // save file
             e.preventDefault();
             const path = editorElem.getAttribute('data-path')
             const src = window.editor.getValue()
@@ -101,10 +132,10 @@ window.addEventListener('load', (event) => {
                 const item = TREE.getItemFromPath(path)
                 item.src = src
                 TREE.markItemClean(item)
-            })
+            }).catch(err=>AlertModal.open(err))
         }
 
-        if (e.key==='b' && e.ctrlKey === true) {
+        if (e.key==='b' && e.ctrlKey === true) { // run project
             e.preventDefault();
             RUN()
         }
@@ -113,7 +144,6 @@ window.addEventListener('load', (event) => {
     document.getElementById('run-btn').addEventListener('click', ()=>RUN())
 
     TREE.setOptions({
-        // navigate: true, // allow navigate with ArrowUp and ArrowDown
         file_contextmenu,
         folder_contextmenu,
         onclick: (item)=>{

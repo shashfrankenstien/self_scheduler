@@ -209,6 +209,13 @@ def new_folder(project_hash):
 	return json.dumps({'success': res})
 
 
+@app.route("/project/<project_hash>/folder/delete", methods=['POST'])
+@cookie_login_json
+def delete_folder(project_hash):
+	P = request.user.get_project(project_hash)
+	res = P.delete_folder(request.json['path'])
+	return json.dumps({'success': res})
+
 
 
 @app.route("/project/<project_hash>/run", methods=['GET'])

@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, shutil
 import importlib
 import fnmatch, glob
 import traceback
@@ -9,14 +9,17 @@ from .base import DB
 SRC_MAIN_PYTHON_STARTER = '''
 
 def main():
-    pass
+    print("Hello World!")
 
 '''
 
 SUPPORTED_LANGUAGES = {
     ".py": "python",
     ".js": "javascript",
+    ".txt": "plaintext",
 }
+
+FS_IGNORES = ["*.pyc", '__pycache__']
 
 
 
@@ -65,6 +68,10 @@ class Project(DB):
 
 
     def _get_file_dict(self, name, path):
+        '''
+        returns a dictionary describing a file with keys:
+            name:str, type:str, path:str, language:str, selected:bool, src:str
+        '''
         ext = os.path.splitext(path)[-1]
         out = {
             'name': name,
@@ -79,6 +86,12 @@ class Project(DB):
 
 
     def _get_folder_dict(self, name, path):
+        '''
+        returns a dictionary describing a folder with keys:
+            name:str, type:str, path:str, open:bool, children:list
+
+        elements of 'children' can be files of folders
+        '''
         return {
             'name': name,
             'type': 'folder',
@@ -89,12 +102,11 @@ class Project(DB):
 
 
     def _children_to_list(self, path):
-        ignores = ["*.pyc", '__pycache__']
         d = []
         for f in glob.glob(os.path.join(path, "*")):
             name = os.path.basename(f)
             ignore = False
-            for pat in ignores:
+            for pat in FS_IGNORES:
                 if fnmatch.fnmatch(name, pat):
                     ignore = True
                     break
@@ -110,12 +122,18 @@ class Project(DB):
 
 
     def struct_to_dict(self):
+        '''
+        returns a list of dictionaries describing the full project with keys:
+            name:str, type:str, path:str, open:bool, children:list
+
+        elements of 'children' can be files of folders
+        '''
         return [{
-            'name': f'{self.user.email}/{self.name}',
-            'path':'',
+            'name': self.name,
             'type': 'folder',
+            'path':'',
+            'open': True, # open by default
             'children': self._children_to_list(self.src_path),
-            'open': True
         }]
 
 
@@ -200,3 +218,31 @@ class Project(DB):
 
         os.makedirs(fpath)
         return self._get_folder_dict(name, fpath)
+
+
+    def delete_folder(self, path, force: bool=False):
+        fldr = os.path.join(self.src_path, path)
+        if not os.path.isdir(fldr):
+            raise Exception(f"Path not found - {path}")
+
+        if force is True:
+            shutil.rmtree(fldr)
+            return True
+
+        dir_empty = True
+        for f in glob.glob(os.path.join(fldr, "*")):
+            name = os.path.basename(f)
+            ignore = False
+            for pat in FS_IGNORES:
+                if fnmatch.fnmatch(name, pat):
+                    ignore = True
+                    break
+            if not ignore:
+                dir_empty = False
+                break
+
+        if dir_empty:
+            shutil.rmtree(fldr)
+        else:
+            raise Exception("Directory not empty")
+        return True
