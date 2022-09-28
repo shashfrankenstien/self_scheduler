@@ -18,6 +18,8 @@ class LoginError(Exception):
 class SelfSchedulerDB(DB):
 
     def __init__(self, workspace_path) -> None:
+        if not os.path.isdir(workspace_path):
+            os.makedirs(workspace_path)
         db_path = os.path.join(workspace_path, "inventory.db")
         super().__init__(db_path)
         self.workspace_path = workspace_path

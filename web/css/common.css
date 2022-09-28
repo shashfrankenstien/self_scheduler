@@ -57,7 +57,7 @@ html, body {
 .output-container > #output {
     width: 100%;
     height: 100%;
-    overflow: scroll;
+    overflow: auto;
     white-space: pre;
 }
 
@@ -72,8 +72,5 @@ html, body {
     tab-size: 4;
     margin: 0px;
     /* padding-top: 20px; */
-}
-
-.editor {
-    overflow: scroll;
+    overflow: hidden;
 }

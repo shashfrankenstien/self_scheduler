@@ -16,7 +16,7 @@ require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(editorElem, {
         language: 'python',
         theme: 'vs-dark',
-        fontSize: '11px',
+        fontSize: '12px',
         fontWeight: '400',
         automaticLayout: true,
     });
@@ -140,8 +140,6 @@ window.addEventListener('load', (event) => {
             RUN()
         }
     })
-
-    document.getElementById('run-btn').addEventListener('click', ()=>RUN())
 
     TREE.setOptions({
         file_contextmenu,

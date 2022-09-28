@@ -147,22 +147,25 @@ class Project(DB):
         # importlib.invalidate_caches()
         module = importlib.import_module('main')
         # importlib.reload(module)
-        print("> imported", module.__name__, "from", os.path.join(self.user.email, self.name))
 
-        res = module.main()
-        print("> done")
+        try:
+            print("> imported", module.__name__, "from", os.path.join(self.user.email, self.name))
 
-        sys.path.remove(self.src_path)
-        os.chdir(curr_dir)
+            res = module.main()
+            print("> done")
 
-        print("> clean up sys.modules")
-        to_remove = []
-        for mod_name, mod in sys.modules.items():
-            if hasattr(mod, '__file__') and mod.__file__ is not None and self.src_path in mod.__file__:
-                to_remove.append(mod_name)
+        finally:
+            sys.path.remove(self.src_path)
+            os.chdir(curr_dir)
 
-        for mod_name in to_remove:
-            del sys.modules[mod_name]
+            print("> clean up sys.modules")
+            to_remove = []
+            for mod_name, mod in sys.modules.items():
+                if hasattr(mod, '__file__') and mod.__file__ is not None and self.src_path in mod.__file__:
+                    to_remove.append(mod_name)
+
+            for mod_name in to_remove:
+                del sys.modules[mod_name]
 
         return res
 
