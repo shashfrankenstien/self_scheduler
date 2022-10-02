@@ -1,7 +1,6 @@
 import os
 import json
 import traceback
-import configparser
 from flask import Flask, send_file, request, redirect, make_response
 from itsdangerous import URLSafeSerializer
 
@@ -12,12 +11,8 @@ from models.project import SUPPORTED_LANGUAGES
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 
-default_config = {'workspace_path': 'projects'}
-config = configparser.ConfigParser(defaults=default_config)
-config.read(os.path.join(CWD, 'config.ini'))
-
-
-workspace_path = os.path.realpath(config['DEFAULT']['workspace_path'])
+workspace_path = os.environ.get('WORKSPACE_PATH', 'projects')
+workspace_path = os.path.realpath(workspace_path)
 db = SelfSchedulerDB(workspace_path)
 db.create_tables()
 
@@ -91,7 +86,7 @@ def cookie_login_json(f):
 def home():
 	u = request.user
 	return openHTML(
-		os.path.join(CWD, 'web', 'index.html'),
+		os.path.join(CWD, 'web', 'profile.html'),
 		face=u.gravatar_url,
 		name=f"{u.first_name} {u.last_name}",
 	)
@@ -236,4 +231,4 @@ def run(project_hash):
 
 
 if __name__ == '__main__':
-	app.run("0.0.0.0")
+	app.run("0.0.0.0", port=5000)
