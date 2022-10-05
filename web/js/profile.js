@@ -8,13 +8,6 @@ const newProjectModal = new Modal(document.getElementById("new-project-modal"), 
     }
 })
 
-const AlertModal = new ModalAlert({
-    css: {
-        backgroundColor: 'rgb(39,40,34)',
-        color: 'white',
-    }
-})
-
 window.addEventListener('load', ()=>{
     const proj_container = document.getElementById("profile-projects")
 

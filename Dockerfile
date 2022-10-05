@@ -17,13 +17,13 @@ CMD ["python3", "server.py"]
 
 
 # sudo docker build -t selfsched .
-# sudo docker run -itd --name ss -p 8000:5000 -v $(pwd)/projects:/etc/projects -e WORKSPACE_PATH='/etc/projects' selfsched
+# sudo docker run -itd --name ss -p 8000:5000 -v $(pwd)/projects:/etc/projects -e SS_WORKSPACE_PATH='/etc/projects' selfsched
 # sudo docker stop ss
 # sudo docker system prune
 
 
 # podman build -t selfsched .
-# podman run -itd --name ss -p 8000:5000 -v $(pwd)/projects:/etc/projects -e WORKSPACE_PATH='/etc/projects' localhost/selfsched
+# podman run -itd --name ss -p 8000:5000 -v $(pwd)/projects:/etc/projects -e SS_WORKSPACE_PATH='/etc/projects' localhost/selfsched
 # podman stop ss
 # podman system prune
 

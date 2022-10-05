@@ -163,6 +163,28 @@ class FileTree {
         delete this.path_map[item.path]
     }
 
+    renameItem(item, name) {
+        // TODO: this has some annoying bugs in path renaming
+        const old_path = item.path
+        item.path = old_path.replace(item.name, name)
+        item.name = name
+        item.node.innerHTML = this.getDisplay(item)
+        if (item.type == 'folder') {
+            // if a folder is renamed, it's children will have wrong path.
+            // replacing all paths
+            for (const p in this.path_map) {
+                const i = this.path_map[p]
+                if (p.includes(old_path)) {
+                    i.path = i.path.replace(old_path, item.path)
+                    delete this.path_map[p]
+                    this.path_map[i.path] = i
+                    console.log(i.path)
+                }
+            }
+
+        }
+    }
+
     markItemDirty(item) {
         if (item.dirty !== true) {
             item.dirty = true

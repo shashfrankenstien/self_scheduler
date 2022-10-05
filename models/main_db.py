@@ -165,7 +165,9 @@ class User(DB):
             );
         ''')
 
-        return self.get_project(name_hash)
+        P = self.get_project(name_hash)
+        P.create_default_files() # only create default files the first time a project is created
+        return P
 
 
 

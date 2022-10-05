@@ -2,6 +2,7 @@ import os, sys, shutil
 import importlib
 import fnmatch, glob
 import traceback
+import configparser
 
 from .base import DB
 
@@ -13,27 +14,67 @@ def main():
 
 '''
 
+SRC_CONFIG_STARTER = '''
+[main]
+file = main.py
+function = main
+
+[schedule]
+every =
+at =
+timezone =
+
+'''
+
+
+SRC_README_STARTER = '''
+Self Scheduler Project
+=======================
+
+This is a project created to be used with self-scheduler application.
+
+    - Project execution is defined by a main.ini file
+
+
+main.ini example
+-----------------
+
+[main]
+file = main.py
+function = main
+
+[schedule]
+every = day
+at = 08:00
+
+'''
+
+
+
 SUPPORTED_LANGUAGES = {
     ".py": "python",
     ".js": "javascript",
+    ".json": "json",
     ".txt": "plaintext",
+    ".md": "markdown",
+    ".ini": "ini"
 }
 
 FS_IGNORES = ["*.pyc", '__pycache__']
 
 
 
-def handler(_exception_type, _value, t):
-    # extract the stack summary
-    summary = traceback.extract_tb(t)
+# def handler(_exception_type, _value, t):
+#     # extract the stack summary
+#     summary = traceback.extract_tb(t)
 
-    # replace file names for each frame summary
-    for frame_summary in summary:
-        filename = frame_summary.filename
-        frame_summary.filename = os.path.relpath(filename)
+#     # replace file names for each frame summary
+#     for frame_summary in summary:
+#         filename = frame_summary.filename
+#         frame_summary.filename = os.path.relpath(filename)
 
-    # rebuild the traceback
-    print(''.join(traceback.format_list(traceback.StackSummary.from_list(summary))), file=sys.stderr)
+#     # rebuild the traceback
+#     print(''.join(traceback.format_list(traceback.StackSummary.from_list(summary))), file=sys.stderr)
 
 
 
@@ -45,26 +86,60 @@ class Project(DB):
     def __init__(self, workspace_path, db_path, user, project_id, name, name_hash, descr):
         super().__init__(db_path)
         self.workspace_path = workspace_path
-        # if user.first_name!='sgop':
-        #     raise Exception("Found it")
-
         self.project_id = project_id
         self.name = name
         self.name_hash = name_hash
         self.descr = descr
         self.user = user
-        self.src_path = os.path.join(self.workspace_path, self.user.email, self.name)
-        self._prep_src()
+        self._src_path = None
 
 
-    def _prep_src(self):
-        if not os.path.isdir(self.src_path):
-            os.makedirs(self.src_path)
+    @property
+    def src_path(self):
+        if self._src_path is None:
+            # # flip email around to get the user's workspace folder
+            # uname, domain = str(self.user.email).split("@", 1)
+            # domain_elems = domain.split(".")
+            # workspace_fldr = '.'.join(reversed(domain_elems)) + "." + uname
+            workspace_fldr = self.user.email
 
+            self._src_path = os.path.join(self.workspace_path, workspace_fldr, self.name)
+            if not os.path.isdir(self._src_path):
+                os.makedirs(self._src_path)
+
+        return self._src_path
+
+
+    def create_default_files(self):
+        '''create default files. should be called the first time a project is created'''
         main_path = os.path.join(self.src_path, 'main.py')
         if not os.path.isfile(main_path):
             with open(main_path, 'w') as m:
                 m.write(SRC_MAIN_PYTHON_STARTER)
+
+        config_path = os.path.join(self.src_path, 'main.ini')
+        if not os.path.isfile(config_path):
+            with open(config_path, 'w') as m:
+                m.write(SRC_CONFIG_STARTER.strip()+'\n')
+
+        readme_path = os.path.join(self.src_path, 'README.txt')
+        if not os.path.isfile(readme_path):
+            with open(readme_path, 'w') as m:
+                m.write(SRC_README_STARTER.strip()+'\n')
+
+
+    def read_main_config(self):
+        conf_path = os.path.join(self.src_path, 'main.ini')
+        if not os.path.isfile(conf_path):
+            raise FileNotFoundError("main.ini file required, but not found.")
+
+        config = configparser.ConfigParser()
+        config.read(conf_path)
+
+        return dict(
+            main_file = config['main']['file'],
+            main_function = config['main']['function'],
+        )
 
 
     def _get_file_dict(self, name, path):
@@ -138,25 +213,39 @@ class Project(DB):
 
 
     def _run(self):
-        curr_dir = os.getcwd()
-        os.chdir(self.src_path)
+        orig_dir = os.getcwd()
+        orig_syspath = sys.path.copy()
+
         # caution: path[0] is reserved for script path (or '' in REPL)
-        sys.path.insert(1, self.src_path)
+        sys.path.remove(sys.path[0])
+        sys.path.insert(0, self.src_path)
+        os.chdir(self.src_path)
+
+        # read config
+        config = self.read_main_config()
+        main_file = os.path.realpath(config['main_file'])
+        main_function = config['main_function']
+
+        if not os.path.isfile(main_file):
+            raise FileNotFoundError(f"{main_file} file not found")
+
+        main_path = os.path.dirname(main_file)
+        main_file = os.path.splitext(os.path.basename(main_file))[0]
+        if main_path not in sys.path: # if main_file is in a subfolder, it should be added to sys.path for import to work
+            sys.path.insert(0, main_path)
 
         # import and immediately reload module to account for any changes
-        # importlib.invalidate_caches()
-        module = importlib.import_module('main')
-        # importlib.reload(module)
+        module = importlib.import_module(main_file)
 
         try:
-            print("> imported", module.__name__, "from", os.path.join(self.user.email, self.name))
-
-            res = module.main()
-            print("> done")
+            print(f"> imported {module.__name__} from {os.path.join(self.user.email, self.name)}\n")
+            runner = getattr(module, main_function)
+            res = runner()
+            print("\n> done")
 
         finally:
-            sys.path.remove(self.src_path)
-            os.chdir(curr_dir)
+            sys.path = orig_syspath
+            os.chdir(orig_dir)
 
             print("> clean up sys.modules")
             to_remove = []
@@ -248,4 +337,17 @@ class Project(DB):
             shutil.rmtree(fldr)
         else:
             raise Exception("Directory not empty")
+        return True
+
+
+    def rename(self, path, name):
+        src = os.path.join(self.src_path, path)
+        if not os.path.isdir(src) and not os.path.isfile(src):
+            raise Exception(f"Path not found - {path}")
+
+        dst = os.path.join(os.path.dirname(src), name)
+        if (os.path.isdir(src) and os.path.isdir(dst)) or (os.path.isfile(src) and os.path.isfile(dst)):
+            raise Exception(f"Name already exists")
+
+        os.rename(src, dst)
         return True

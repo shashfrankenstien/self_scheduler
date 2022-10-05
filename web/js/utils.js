@@ -17,3 +17,21 @@ const modFetch = async (endpoint, method, body) => {
         }
     })
 }
+
+
+const AlertModal = new ModalAlert({
+    css: {
+        backgroundColor: 'rgb(39,40,34)',
+        color: 'white',
+    },
+
+    classList: ['btn-dark']
+})
+
+const ConfirmModal = new ModalConfirm({
+    css: {
+        backgroundColor: 'rgb(39,40,34)',
+        color: 'white',
+    },
+    classList: ['btn-dark']
+})

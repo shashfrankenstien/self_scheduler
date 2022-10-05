@@ -11,7 +11,7 @@ from models.project import SUPPORTED_LANGUAGES
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 
-workspace_path = os.environ.get('WORKSPACE_PATH', 'projects')
+workspace_path = os.environ.get('SS_WORKSPACE_PATH', 'projects')
 workspace_path = os.path.realpath(workspace_path)
 db = SelfSchedulerDB(workspace_path)
 db.create_tables()
@@ -209,6 +209,17 @@ def new_folder(project_hash):
 def delete_folder(project_hash):
 	P = request.user.get_project(project_hash)
 	res = P.delete_folder(request.json['path'])
+	return json.dumps({'success': res})
+
+
+@app.route("/project/<project_hash>/rename", methods=['POST'])
+@cookie_login_json
+def rename(project_hash):
+	P = request.user.get_project(project_hash)
+	data = request.json
+	name = str(data['name']).strip()
+
+	res = P.rename(data['path'], name)
 	return json.dumps({'success': res})
 
 

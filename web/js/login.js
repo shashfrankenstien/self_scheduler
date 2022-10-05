@@ -19,12 +19,7 @@ const SignupModal = new Modal(document.getElementById("signup-box"), {
         backgroundColor: "transparent",
     }
 })
-const AlertModal = new ModalAlert({
-    css: {
-        backgroundColor: 'rgb(39,40,34)',
-        color: 'white',
-    }
-})
+
 
 LoginModal.open()
 

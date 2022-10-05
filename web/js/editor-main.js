@@ -27,14 +27,6 @@ require(["vs/editor/editor.main"], () => {
 
 
 
-const AlertModal = new ModalAlert({
-    css: {
-        backgroundColor: 'rgb(39,40,34)',
-        color: 'white',
-    }
-})
-
-
 function openOutputWindow() {
     const outputElem = document.getElementById('output')
     outputElem.innerText = ''
@@ -56,11 +48,25 @@ const RUN = () => {
     })
 }
 
+const commonRename = (item) => {
+    const name = prompt("New Name:", item.name)
+    if (name) {
+        API.rename(item.path, name).then(res=>{
+            TREE.renameItem(item, name)
+        }).catch(err=>AlertModal.open(err))
+    }
+}
+
 
 const folder_contextmenu = (ev, item) => {
     ev.preventDefault();
     let menu = new ContextMenu(ev.pageX, ev.pageY)
 
+    menu.addNewOption("Rename", ()=>{
+        // commonRename(item)
+        AlertModal.open("Disabled: Folder renaming has bugs in child path renaming.")
+        menu.close()
+    })
     menu.addNewOption("New File", ()=>{
         const name = prompt("File Name:")
         if (name) {
@@ -83,11 +89,14 @@ const folder_contextmenu = (ev, item) => {
     })
     if (item.path && item.path!=="/") {
         menu.addNewOption("Delete", ()=>{
-            if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-                API.deleteFolder(item.path).then(res=>{
-                    TREE.deleteItem(item)
-                }).catch(err=>AlertModal.open(err))
-            }
+            ConfirmModal.open(
+                `Are you sure you want to delete ${item.name}?`,
+                ()=>{
+                    API.deleteFolder(item.path).then(res=>{
+                        TREE.deleteItem(item)
+                    }).catch(err=>AlertModal.open(err))
+                }
+            )
             menu.close()
         })
     }
@@ -100,18 +109,21 @@ const file_contextmenu = (ev, item) => {
     let menu = new ContextMenu(ev.pageX, ev.pageY)
 
     menu.addNewOption("Rename", ()=>{
-        console.log(item.name)
+        commonRename(item)
         menu.close()
     })
     menu.addNewOption("Delete", ()=>{
-        if (confirm(`Are you sure you want to delete ${item.name}?`)) {
-            API.deleteFile(item.path).then(res=>{
-                if (item.model) {
-                    item.model.dispose()
-                }
-                TREE.deleteItem(item)
-            }).catch(err=>AlertModal.open(err))
-        }
+        ConfirmModal.open(
+            `Are you sure you want to delete ${item.name}?`,
+            ()=>{
+                API.deleteFile(item.path).then(res=>{
+                    if (item.model) {
+                        item.model.dispose()
+                    }
+                    TREE.deleteItem(item)
+                }).catch(err=>AlertModal.open(err))
+            }
+        )
         menu.close()
     })
     menu.open()
@@ -161,6 +173,6 @@ window.addEventListener('load', (event) => {
         }
     });
 
-    API.loadTree(TREE)
+    API.loadTree(TREE).catch(err=>AlertModal.open(err))
 
 })

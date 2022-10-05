@@ -50,6 +50,15 @@ class SS_Project_API {
         })
     }
 
+    rename(path, name) {
+        return modFetch(`/project/${this.project}/rename`, "POST", {
+            path,
+            name
+        }).then(res=>{
+            return res
+        })
+    }
+
     run() {
         return modFetch(`/project/${this.project}/run`, "GET")
     }

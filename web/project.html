@@ -15,7 +15,7 @@
         integrity="sha512-6bIYsGqvLpAiEBXPdRQeFf5cueeBECtAKJjIHer3BhBZNTV3WLcLA8Tm3pDfxUwTMIS+kAZwTUvJ1IrMdX8C5w=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <script src="https://cdn.jsdelivr.net/gh/shashfrankenstien/lib-modaljs@v0.2.0/lib-modal.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/shashfrankenstien/lib-modaljs@v0.2.1/lib-modal.min.js"></script>
 
     <link rel="stylesheet" href="/static/css/common.css">
     <link rel="stylesheet" href="/static/css/context-menu.css">
@@ -23,9 +23,6 @@
 
 </head>
 
-<script>
-    const closing = ()=>closeOutputWindow()
-</script>
 
 <body>
     <div class="container">
@@ -34,7 +31,7 @@
             <div id="editor" class="editor"></div>
             <div class="output-container" style="display: none;">
                 <button style="position: absolute; top:2px; right:2px;"
-                    onclick="closing()"
+                    onclick="closeOutputWindow()"
                     >close</button>
                 <div id="output"></div>
             </div>
