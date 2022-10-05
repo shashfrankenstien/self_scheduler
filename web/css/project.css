@@ -1,0 +1,7 @@
+#project-settings-popup {
+    white-space: pre;
+    overflow: scroll;
+    height: 100%;
+    width: 100%;
+    margin: 20px 1px 10px 20px;
+}

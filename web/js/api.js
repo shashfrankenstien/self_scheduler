@@ -4,6 +4,12 @@ class SS_Project_API {
         this.project = project
     }
 
+    getProperties() {
+        return modFetch(`/project/${this.project}/properties`, "GET").then(res=>{
+            return res
+        })
+    }
+
     loadTree(treeObj) {
         return modFetch(`/project/${this.project}/tree`, "GET").then(res=>{
             treeObj.showTree(res);

@@ -2,10 +2,7 @@ const newProjectModal = new Modal(document.getElementById("new-project-modal"), 
     width: '400px',
     height: '400px',
     displayStyle: 'flex',
-    css: {
-        backgroundColor: 'rgb(39,40,34)',
-        color: 'white',
-    }
+    classList: ['theme-modal-container']
 })
 
 window.addEventListener('load', ()=>{
@@ -40,7 +37,8 @@ function newProject() {
     const new_proj_box = document.getElementById("new-project-modal")
     const name = new_proj_box.querySelector("[name='project_name']").value.trim()
     const descr = new_proj_box.querySelector("[name='project_descr']").value.trim()
-    modFetch("/project/new", 'POST', {name, descr}).then(res=>{
+
+    modFetch("/projects/new", 'POST', {name, descr}).then(res=>{
         newProjectModal.close()
         window.location = `/project/${res}`
     }).catch(err=>AlertModal.open(err))

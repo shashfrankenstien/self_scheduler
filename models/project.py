@@ -2,7 +2,7 @@ import os, sys, shutil
 import importlib
 import fnmatch, glob
 import traceback
-import configparser
+from datetime import datetime as dt
 
 from .base import DB
 
@@ -117,10 +117,10 @@ class Project(DB):
             with open(main_path, 'w') as m:
                 m.write(SRC_MAIN_PYTHON_STARTER)
 
-        config_path = os.path.join(self.src_path, 'main.ini')
-        if not os.path.isfile(config_path):
-            with open(config_path, 'w') as m:
-                m.write(SRC_CONFIG_STARTER.strip()+'\n')
+        # config_path = os.path.join(self.src_path, 'main.ini')
+        # if not os.path.isfile(config_path):
+        #     with open(config_path, 'w') as m:
+        #         m.write(SRC_CONFIG_STARTER.strip()+'\n')
 
         readme_path = os.path.join(self.src_path, 'README.txt')
         if not os.path.isfile(readme_path):
@@ -128,18 +128,57 @@ class Project(DB):
                 m.write(SRC_README_STARTER.strip()+'\n')
 
 
-    def read_main_config(self):
-        conf_path = os.path.join(self.src_path, 'main.ini')
-        if not os.path.isfile(conf_path):
-            raise FileNotFoundError("main.ini file required, but not found.")
+    def create_default_entry_point(self):
+        '''create default entry point. should be called the first time a project is created'''
+        ep = self.get_default_entry_point()
+        if ep is not None:
+            return ep
 
-        config = configparser.ConfigParser()
-        config.read(conf_path)
+        self.execute(f'''
+            INSERT INTO entry_points (
+                project_id, file, function, is_default, create_dt
+            )
+            VALUES (
+                '{self.project_id}', 'main.py', 'main', 1,
+                '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}'
+            );
+        ''')
+        return self.get_default_entry_point()
 
-        return dict(
-            main_file = config['main']['file'],
-            main_function = config['main']['function'],
+
+    def get_default_entry_point(self):
+        return self.execute(
+            f"SELECT file, function FROM entry_points WHERE project_id = {self.project_id} AND is_default = 1;",
+            fetch_one=True
         )
+
+
+    def get_properties(self):
+        eps = self.execute(f'''
+            SELECT
+            p.name || ':' || ep.file || ':' || ep.function as name,
+            ep.*
+            FROM projects p
+            LEFT JOIN entry_points ep
+                ON p.id = ep.project_id
+            WHERE p.id = {self.project_id}
+        ''')
+        scheds = self.execute(f'''
+            SELECT
+            p.name || ':' || ep.file || ':' || ep.function as name,
+            sched.*
+            FROM projects p
+            LEFT JOIN entry_points ep
+                ON p.id = ep.project_id
+            LEFT JOIN schedule sched
+                ON ep.id = sched.ep_id
+            WHERE p.id = {self.project_id}
+            AND sched.id IS NOT NULL
+        ''')
+        return {
+            'end_points': [ep._asdict() for ep in eps],
+            'schedule': [s._asdict() for s in scheds],
+        }
 
 
     def _get_file_dict(self, name, path):
@@ -196,9 +235,9 @@ class Project(DB):
         return d
 
 
-    def struct_to_dict(self):
+    def get_file_struct_dict(self):
         '''
-        returns a list of dictionaries describing the full project with keys:
+        returns a list of dictionaries describing the full project files with keys:
             name:str, type:str, path:str, open:bool, children:list
 
         elements of 'children' can be files of folders
@@ -222,9 +261,10 @@ class Project(DB):
         os.chdir(self.src_path)
 
         # read config
-        config = self.read_main_config()
-        main_file = os.path.realpath(config['main_file'])
-        main_function = config['main_function']
+        ep = self.get_default_entry_point()
+        print(ep)
+        main_file = os.path.realpath(ep.file)
+        main_function = ep.function
 
         if not os.path.isfile(main_file):
             raise FileNotFoundError(f"{main_file} file not found")
@@ -295,7 +335,7 @@ class Project(DB):
         pp = os.path.join(self.src_path, path)
         if os.path.isfile(pp):
             os.remove(pp)
-            return True #self.struct_to_dict()
+            return True #self.get_file_struct_dict()
         raise Exception(f"Path not found - {path}")
 
 

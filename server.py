@@ -108,7 +108,7 @@ def login():
 
 @app.route("/signup", methods=['POST'])
 def signup():
-	raise NotImplementedError("Action is disabled")
+	# raise NotImplementedError("Action is disabled")
 	data = json.loads(request.data)
 	print(data)
 	u = db.create_new_user(data.get('first_name'), data.get('last_name'), data.get('email'), data.get('password'))
@@ -134,7 +134,7 @@ def list_projects():
 	return json.dumps({'success': projs})
 
 
-@app.route("/project/new", methods=['POST'])
+@app.route("/projects/new", methods=['POST'])
 @cookie_login_json
 def new_project():
 	data = json.loads(request.data)
@@ -147,7 +147,9 @@ def new_project():
 @app.route("/project/<project_hash>", methods=['GET'])
 @cookie_login
 def open_project(project_hash):
-	request.user.get_project(project_hash)  # basic file structure init
+	P = request.user.get_project(project_hash)  # basic file structure init
+	# P.create_default_entry_point()
+	P.get_properties()
 	return openHTML(os.path.join(CWD, 'web', 'project.html'), project_hash=project_hash)
 
 
@@ -155,8 +157,14 @@ def open_project(project_hash):
 @cookie_login_json
 def tree(project_hash):
 	P = request.user.get_project(project_hash)
-	return json.dumps({'success': P.struct_to_dict()})
+	return json.dumps({'success': P.get_file_struct_dict()})
 
+
+@app.route("/project/<project_hash>/properties", methods=['GET'])
+@cookie_login_json
+def properties(project_hash):
+	P = request.user.get_project(project_hash)
+	return json.dumps({'success': P.get_properties()})
 
 
 @app.route("/project/<project_hash>/file/new", methods=['POST'])

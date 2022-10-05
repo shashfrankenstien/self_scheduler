@@ -52,14 +52,35 @@ class SelfSchedulerDB(DB):
                 name_hash TEXT NOT NULL,
                 descr TEXT,
                 create_dt TEXT NOT NULL,
-                sched_every TEXT DEFAULT NULL,
-                sched_at TEXT DEFAULT NULL,
-                last_run_dt TEXT DEFAULT NULL,
-                last_run_res TEXT DEFAULT NULL,
-                FOREIGN KEY(user_id) REFERENCES users(id)
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )
         ''', conn=conn)
 
+        self.execute('''
+            CREATE TABLE IF NOT EXISTS entry_points (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                file TEXT NOT NULL,
+                function TEXT NOT NULL,
+                is_default INTEGER DEFAULT 0,
+                create_dt TEXT NOT NULL,
+                FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+            )
+        ''', conn=conn)
+
+        self.execute('''
+            CREATE TABLE IF NOT EXISTS schedule (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ep_id INTEGER NOT NULL,
+                every TEXT DEFAULT NULL,
+                at TEXT DEFAULT NULL,
+                last_run_dt TEXT DEFAULT NULL,
+                last_run_res TEXT DEFAULT NULL,
+                is_scheduled INTEGER DEFAULT 0,
+                create_dt TEXT NOT NULL,
+                FOREIGN KEY(ep_id) REFERENCES entry_points(id) ON DELETE CASCADE
+            )
+        ''', conn=conn)
 
     def user_exists(self, email):
         if not email_format_ok(email):
@@ -77,6 +98,9 @@ class SelfSchedulerDB(DB):
 
 
     def login_user(self, email, password):
+        if email == "" or password == "":
+            raise ValueError("missing required fields")
+
         u = self.execute(f'''SELECT * FROM users WHERE email = '{email}' ''', fetch_one=True)
         if u is None:
             raise LoginError("Incorrect credentials")
@@ -87,6 +111,9 @@ class SelfSchedulerDB(DB):
 
 
     def create_new_user(self, first_name, last_name, email, password):
+        if first_name == "" or last_name == "" or email == "" or password == "":
+            raise ValueError("missing required fields")
+
         if self.user_exists(email):
             raise Exception("User already exists")
 
@@ -149,6 +176,10 @@ class User(DB):
 
 
     def create_new_project(self, name, descr):
+        name = str(name).strip()
+        if name == "":
+            raise ValueError("project name cannot be empty")
+
         name_hash = hashlib.md5(str(name).strip().encode()).hexdigest()
 
         if self.project_exists(name_hash):
@@ -167,6 +198,7 @@ class User(DB):
 
         P = self.get_project(name_hash)
         P.create_default_files() # only create default files the first time a project is created
+        P.create_default_entry_point() # only create default entry point the first time a project is created
         return P
 
 
