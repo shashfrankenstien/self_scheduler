@@ -22,9 +22,9 @@ class DB:
     def create_salt(self):
         return hashlib.sha256(str(random.random()).encode()).hexdigest()
 
+
     def hash_password(self, password, salt):
         return hashlib.sha256(f"{salt}{password}{salt}".encode()).hexdigest()
-
 
 
     def get_connection(self):

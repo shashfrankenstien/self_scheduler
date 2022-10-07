@@ -1,6 +1,9 @@
 import os
 import json
+import re
 import traceback
+import argparse
+
 from flask import Flask, send_file, request, redirect, make_response
 from itsdangerous import URLSafeSerializer
 
@@ -11,27 +14,49 @@ from models.project import SUPPORTED_LANGUAGES
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 
-workspace_path = os.environ.get('SS_WORKSPACE_PATH', 'projects')
-workspace_path = os.path.realpath(workspace_path)
-db = SelfSchedulerDB(workspace_path)
-db.create_tables()
+
+parser = argparse.ArgumentParser(__name__)
+parser.add_argument("--workspace-path", "-w", help="Path to workspace directory", type=str, default=None)
+parser.add_argument("--signup-enable", help="Run app with signup page enabled", action="store_true")
+args = parser.parse_args()
+
+
+if args.workspace_path:
+	WORKSPACE_PATH = args.workspace_path
+else:
+	WORKSPACE_PATH = os.environ.get('SS_WORKSPACE_PATH', 'projects')
+
+if args.signup_enable:
+	SIGNUP_ENABLED = True
+else:
+	SIGNUP_ENABLED = os.environ.get('SS_SIGNUP_ENABLED') == '1'
 
 
 app = Flask(__name__)
-
 crypt = URLSafeSerializer("secret")
 
-
-def fillTemplate(htmlText, **kwargs):
-	for arg in kwargs:
-		htmlText = htmlText.replace("{{ "+arg+" }}", str(kwargs[arg]))
-	return htmlText
+db = SelfSchedulerDB(os.path.realpath(WORKSPACE_PATH))
+db.create_tables()
 
 
-def openHTML(fileName, **kwargs):
-	with open(fileName, 'r') as f:
-		templateText = f.read()
-	return make_response(fillTemplate(templateText, **kwargs))
+class SimpleTemplate:
+
+	@staticmethod
+	def render(htmlText, **kwargs):
+		for arg in kwargs:
+			htmlText = htmlText.replace("{{ "+arg+" }}", str(kwargs[arg]))
+		return htmlText
+
+	@staticmethod
+	def render_file(fileName, **kwargs):
+		with open(fileName, 'r') as f:
+			templateText = f.read()
+		return SimpleTemplate.render(templateText, **kwargs)
+
+
+	@staticmethod
+	def send_file(fileName, **kwargs):
+		return make_response(SimpleTemplate.render_file(fileName, **kwargs))
 
 
 
@@ -85,7 +110,7 @@ def cookie_login_json(f):
 @cookie_login
 def home():
 	u = request.user
-	return openHTML(
+	return SimpleTemplate.send_file(
 		os.path.join(CWD, 'web', 'profile.html'),
 		face=u.gravatar_url,
 		name=f"{u.first_name} {u.last_name}",
@@ -95,7 +120,17 @@ def home():
 @app.route("/login", methods=['GET','POST'])
 def login():
 	if request.method == 'GET':
-		return send_file(os.path.join(CWD, 'web', 'login.html'))
+		signup_link = ''
+		signup_content = 'DISABLED'
+		if SIGNUP_ENABLED:
+			signup_link = '''<a href="#" onclick="showSignup()">Signup</a>'''
+			signup_content = SimpleTemplate.render_file(os.path.join(CWD, 'web', 'signup_content.html'))
+
+		return SimpleTemplate.send_file(
+			os.path.join(CWD, 'web', 'login.html'),
+			signup_link=signup_link,
+			signup_content=signup_content
+		)
 
 	data = json.loads(request.data)
 	print(data)
@@ -108,7 +143,8 @@ def login():
 
 @app.route("/signup", methods=['POST'])
 def signup():
-	# raise NotImplementedError("Action is disabled")
+	if not SIGNUP_ENABLED:
+		raise NotImplementedError("Action is disabled")
 	data = json.loads(request.data)
 	print(data)
 	u = db.create_new_user(data.get('first_name'), data.get('last_name'), data.get('email'), data.get('password'))
@@ -150,7 +186,7 @@ def open_project(project_hash):
 	P = request.user.get_project(project_hash)  # basic file structure init
 	# P.create_default_entry_point()
 	P.get_properties()
-	return openHTML(os.path.join(CWD, 'web', 'project.html'), project_hash=project_hash)
+	return SimpleTemplate.send_file(os.path.join(CWD, 'web', 'project.html'), project_hash=project_hash)
 
 
 @app.route("/project/<project_hash>/tree", methods=['GET'])

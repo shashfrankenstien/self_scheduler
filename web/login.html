@@ -17,20 +17,11 @@
         <input type="password" name="password" placeholder="Password">
 
         <button type="submit" onclick="login()">Login</button>
-        <a href="#" onclick="showSignup()">Signup</a>
+        {{ signup_link }}
     </div>
 
     <div id="signup-box" class="login-signup-box">
-        <h3>Signup</h3>
-        <input type="text" name="first_name" placeholder="First Name">
-        <input type="text" name="last_name" placeholder="Last Name">
-        <input type="email" name="email" placeholder="Email">
-        <input type="password" name="password" placeholder="Password">
-        <input type="password" name="password2" placeholder="Retype Password">
-
-        <!-- <input type="submit" value="Submit"> -->
-        <button type="submit" onclick="signup()">Signup</button>
-        <a href="#" onclick="showLogin()">Login</a>
+        {{ signup_content }}
     </div>
 </body>
 
