@@ -16,7 +16,7 @@ require(["vs/editor/editor.main"], () => {
     window.editor = monaco.editor.create(editorElem, {
         language: 'python',
         theme: 'vs-dark',
-        fontSize: '12px',
+        fontSize: 12,
         fontWeight: '400',
         automaticLayout: true,
     });
@@ -40,6 +40,17 @@ function closeOutputWindow() {
 }
 
 
+const SAVE = () => {
+    const editorElem = document.getElementById('editor')
+    const path = editorElem.getAttribute('data-path')
+    const src = window.editor.getValue()
+    API.saveFile(path, src).then(res=>{
+        const item = TREE.getItemFromPath(path)
+        item.src = src
+        TREE.markItemClean(item)
+    }).catch(err=>AlertModal.open(err))
+}
+
 
 const RUN = () => {
     const outputElem = openOutputWindow()
@@ -62,11 +73,13 @@ const folder_contextmenu = (ev, item) => {
     ev.preventDefault();
     let menu = new ContextMenu(ev.pageX, ev.pageY)
 
-    menu.addNewOption("Rename", ()=>{
-        // commonRename(item)
-        AlertModal.open("Disabled: Folder renaming has bugs in child path renaming.")
-        menu.close()
-    })
+    if (item.path && item.path!=="/") {
+        menu.addNewOption("Rename", ()=>{
+            // commonRename(item)
+            AlertModal.open("Disabled: Folder renaming has bugs in child path renaming.")
+            menu.close()
+        })
+    }
     menu.addNewOption("New File", ()=>{
         const name = prompt("File Name:")
         if (name) {
@@ -138,16 +151,10 @@ window.addEventListener('load', (event) => {
     editorElem.addEventListener('keydown', (e)=>{
         if (e.key==='s' && e.ctrlKey === true) { // save file
             e.preventDefault();
-            const path = editorElem.getAttribute('data-path')
-            const src = window.editor.getValue()
-            API.saveFile(path, src).then(res=>{
-                const item = TREE.getItemFromPath(path)
-                item.src = src
-                TREE.markItemClean(item)
-            }).catch(err=>AlertModal.open(err))
+            SAVE()
         }
 
-        if (e.key==='b' && e.ctrlKey === true) { // run project
+        else if (e.key==='b' && e.ctrlKey === true) { // run project
             e.preventDefault();
             RUN()
         }

@@ -1,6 +1,6 @@
 
 
-const projectPropsModal = new Modal(document.getElementById("project-settings-popup"), {
+const projectPropsModal = new Modal(document.getElementById("project-properties-modal"), {
     width: '600px',
     height: '500px',
     displayStyle: 'flex',
@@ -23,3 +23,27 @@ const openProjectProperties = () => {
         })
     })
 }
+
+
+const openProjectMenu = (ev) => {
+    sz = ev.target.getBoundingClientRect()
+    let menu = new ContextMenu(sz.x, sz.y)
+
+    menu.addNewOption("Save (ctrl+s)", ()=>{
+        // commonRename(item)
+        SAVE()
+        menu.close()
+    })
+    menu.addNewOption("Run (ctrl+b)", ()=>{
+        // commonRename(item)
+        RUN()
+        menu.close()
+    })
+    menu.addNewOption("Properties", ()=>{
+        openProjectProperties()
+        menu.close()
+    })
+    menu.open()
+
+}
+

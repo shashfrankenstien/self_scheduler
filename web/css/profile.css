@@ -13,19 +13,25 @@ body {
     /* border: 1px solid var(--tree-node-fg-color); */
 }
 
+@media (orientation: portrait) {
+    .profile-container {
+        width: 90vw;
+    }
+}
+
 #profile-picture {
-    width: 200px;
-    height: 200px;
+    width: 12.5rem;
+    height: 12.5rem;
     border-radius: 50%;
-    margin: 20px;
+    margin: 1.25rem;
 }
 
 #profile-projects-container {
     position: relative;
     width:100%;
     max-width: 100%;
-    min-height: 100px;
-    padding: 10px;
+    min-height: 6rem;
+    padding: 0.5rem;
     /* border: 1px solid var(--light-border-color); */
 }
 
@@ -37,8 +43,8 @@ body {
 }
 
 #profile-projects .project {
-    width: 24vw;
-    height: 50px;
+    min-width: 48%;
+    min-height: 50px;
     border: 1px solid var(--light-border-color);
     border-radius: 10px;
     margin-bottom: 1vw;

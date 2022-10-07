@@ -54,11 +54,23 @@ class FileTree {
             node.style.display = 'none'
         }
 
-        if (item.type==='folder'){
-            node.addEventListener('contextmenu', (ev)=>this.options.folder_contextmenu(ev, item));
-        } else {
-            node.addEventListener('contextmenu', (ev)=>this.options.file_contextmenu(ev, item));
-        }
+        const ctxMenu = (item.type==='folder') ? this.options.folder_contextmenu : this.options.file_contextmenu
+
+        node.addEventListener('contextmenu', (ev)=>ctxMenu(ev, item));
+
+        let touchTimeout = null
+        node.addEventListener('touchstart', (ev)=>{
+            ev.preventDefault()
+            touchTimeout = setTimeout(()=>ctxMenu(ev, item), 1000)
+        });
+        node.addEventListener('touchend', (ev)=>{
+            if (touchTimeout) {
+                clearTimeout(touchTimeout)
+                touchTimeout = null
+                this._clicked(item)
+            }
+        });
+
         node.addEventListener('mousedown', (ev) => {
             if (ev.button===0) { // left-click
                 ev.preventDefault()
