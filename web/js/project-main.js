@@ -44,7 +44,7 @@ const SAVE = () => {
     const editorElem = document.getElementById('editor')
     const path = editorElem.getAttribute('data-path')
     const src = window.editor.getValue()
-    API.saveFile(path, src).then(res=>{
+    API.saveFile(path, src).then(()=>{
         const item = TREE.getItemFromPath(path)
         item.src = src
         TREE.markItemClean(item)
@@ -52,11 +52,21 @@ const SAVE = () => {
 }
 
 
+var IS_RUNNING = false
 const RUN = () => {
-    const outputElem = openOutputWindow()
-    API.run().then(res=>{
-        outputElem.innerText = res
-    })
+    if (!IS_RUNNING) {
+        IS_RUNNING = true
+        const outputElem = openOutputWindow()
+        API.runAsync((msg)=>{
+            outputElem.innerText = outputElem.innerText + msg
+            outputElem.scrollTop = outputElem.scrollHeight
+        }).then(()=>{
+            IS_RUNNING = false
+        })
+    }
+    else {
+        AlertModal.open("Already running")
+    }
 }
 
 const commonRename = (item) => {

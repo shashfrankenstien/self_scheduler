@@ -1,13 +1,12 @@
 import os
 import json
-import re
+import queue
 import traceback
 import argparse
 
-from flask import Flask, send_file, request, redirect, make_response
+from flask import Flask, send_file, request, redirect, make_response, Response
 from itsdangerous import URLSafeSerializer
 
-from capture import print_capture
 from models import SelfSchedulerDB
 from models.project import SUPPORTED_LANGUAGES
 
@@ -267,19 +266,22 @@ def rename(project_hash):
 	return json.dumps({'success': res})
 
 
-
 @app.route("/project/<project_hash>/run", methods=['GET'])
 @cookie_login_json
 def run(project_hash):
-	msgs = []
-	def _cb(msg):
-		msgs.append(str(msg))
+	P = request.user.get_project(project_hash)
+	msg_queue = queue.Queue()
+	run_thread = P.create_run_thread(msg_queue=msg_queue)
 
-	with print_capture(_cb):
-		P = request.user.get_project(project_hash)
-		P.run()
+	def progress():
+		run_thread.start()
+		while run_thread.is_alive():
+			yield msg_queue.get()
+		while not msg_queue.empty():
+			yield msg_queue.get()
+		run_thread.join()
 
-	return json.dumps({'success': ''.join(msgs)})
+	return Response(progress())
 
 
 

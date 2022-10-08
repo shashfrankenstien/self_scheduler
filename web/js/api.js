@@ -65,8 +65,8 @@ class SS_Project_API {
         })
     }
 
-    run() {
-        return modFetch(`/project/${this.project}/run`, "GET")
+    runAsync(msg_cb) {
+        return streamFetch(`/project/${this.project}/run`, "GET", null, msg_cb)
     }
 }
 

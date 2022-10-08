@@ -3,8 +3,10 @@ import importlib
 import fnmatch, glob
 import traceback
 from datetime import datetime as dt
+import threading
 
 from .base import DB
+from .capture import print_capture
 
 
 SRC_MAIN_PYTHON_STARTER = '''
@@ -92,6 +94,8 @@ class Project(DB):
         self.descr = descr
         self.user = user
         self._src_path = None
+
+        self._is_running = False
 
 
     @property
@@ -251,64 +255,6 @@ class Project(DB):
         }]
 
 
-    def _run(self):
-        orig_dir = os.getcwd()
-        orig_syspath = sys.path.copy()
-
-        # caution: path[0] is reserved for script path (or '' in REPL)
-        sys.path.remove(sys.path[0])
-        sys.path.insert(0, self.src_path)
-        os.chdir(self.src_path)
-
-        # read config
-        ep = self.get_default_entry_point()
-        print(ep)
-        main_file = os.path.realpath(ep.file)
-        main_function = ep.function
-
-        if not os.path.isfile(main_file):
-            raise FileNotFoundError(f"{main_file} file not found")
-
-        main_path = os.path.dirname(main_file)
-        main_file = os.path.splitext(os.path.basename(main_file))[0]
-        if main_path not in sys.path: # if main_file is in a subfolder, it should be added to sys.path for import to work
-            sys.path.insert(0, main_path)
-
-        # import and immediately reload module to account for any changes
-        module = importlib.import_module(main_file)
-
-        try:
-            print(f"> imported {module.__name__} from {os.path.join(self.user.email, self.name)}\n")
-            runner = getattr(module, main_function)
-            res = runner()
-            print("\n> done")
-
-        finally:
-            sys.path = orig_syspath
-            os.chdir(orig_dir)
-
-            print("> clean up sys.modules")
-            to_remove = []
-            for mod_name, mod in sys.modules.items():
-                if hasattr(mod, '__file__') and mod.__file__ is not None and self.src_path in mod.__file__:
-                    to_remove.append(mod_name)
-
-            for mod_name in to_remove:
-                del sys.modules[mod_name]
-
-        return res
-
-
-    def run(self):
-        try:
-            self._run()
-        except:
-            err = traceback.format_exc()
-            err = err.replace(os.path.join(self.workspace_path, self.user.email), '')
-            err = err.replace(self.workspace_path, '')
-            # err = err.replace(CWD, '')
-            print(err)
-
 
     def new_file(self, path, name):
         src = os.path.join(self.src_path, path)
@@ -391,3 +337,89 @@ class Project(DB):
 
         os.rename(src, dst)
         return True
+
+
+
+
+    def _run(self):
+        self._is_running = True
+        orig_dir = os.getcwd()
+        orig_syspath = sys.path.copy()
+
+        # caution: path[0] is reserved for script path (or '' in REPL)
+        sys.path.remove(sys.path[0])
+        sys.path.insert(0, self.src_path)
+        os.chdir(self.src_path)
+
+        # read config
+        ep = self.get_default_entry_point()
+        print(ep)
+        main_file = os.path.realpath(ep.file)
+        main_function = ep.function
+
+        if not os.path.isfile(main_file):
+            raise FileNotFoundError(f"{main_file} file not found")
+
+        main_path = os.path.dirname(main_file)
+        main_file = os.path.splitext(os.path.basename(main_file))[0]
+        if main_path not in sys.path: # if main_file is in a subfolder, it should be added to sys.path for import to work
+            sys.path.insert(0, main_path)
+
+        # import and immediately reload module to account for any changes
+        module = importlib.import_module(main_file)
+
+        try:
+            print(f"> imported {module.__name__} from {os.path.join(self.user.email, self.name)}\n")
+            runner = getattr(module, main_function)
+            res = runner()
+            print("\n> done")
+
+        finally:
+            sys.path = orig_syspath
+            os.chdir(orig_dir)
+
+            print("> clean up sys.modules")
+            to_remove = []
+            for mod_name, mod in sys.modules.items():
+                if hasattr(mod, '__file__') and mod.__file__ is not None and self.src_path in mod.__file__:
+                    to_remove.append(mod_name)
+
+            for mod_name in to_remove:
+                del sys.modules[mod_name]
+
+            self._is_running = False
+        return res
+
+
+    def _run_print_wrapper(self, msg_cb):
+        with print_capture(msg_cb):
+            try:
+                self._run()
+            except:
+                err = traceback.format_exc()
+                err = err.replace(os.path.join(self.workspace_path, self.user.email), '')
+                err = err.replace(self.workspace_path, '')
+                # err = err.replace(CWD, '')
+                print(err)
+
+    # def run(self): # not used
+    #     msgs = []
+    #     def _cb(msg):
+    #         msgs.append(str(msg))
+
+    #     self._run_print_wrapper(msg_cb=_cb)
+    #     return msgs
+
+
+    def create_run_thread(self, msg_queue):
+
+        def _thread_target():
+            def _cb(msg):
+                msg_queue.put_nowait(str(msg))
+
+            self._run_print_wrapper(msg_cb=_cb)
+
+        t = threading.Thread(target=_thread_target)
+        t.daemon = True # makes sure it dies with parent process
+        return t
+

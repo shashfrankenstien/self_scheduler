@@ -19,6 +19,27 @@ const modFetch = async (endpoint, method, body) => {
 }
 
 
+const streamFetch = async (endpoint, method, body, streamcb) => {
+    const response = await fetch(endpoint, {
+        method,
+        headers: {'Content-Type': 'application/json'},
+        credentials: "same-origin",
+        body: body || null
+    });
+    const reader = response.body.getReader();
+
+    while (true) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        // console.log('Received', value);
+        streamcb(String.fromCharCode.apply(null, value))
+    }
+
+    // console.log('Response fully received');
+    // return "Success!"
+}
+
+
 const AlertModal = new ModalAlert({
     classList: ['theme-modal-container']
 })
