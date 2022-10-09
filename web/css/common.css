@@ -95,12 +95,18 @@ html, body {
     border: 1px solid var(--light-border-color);
     border-radius: 5px;
     outline: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+.theme-modal-container button:disabled {
+    cursor: not-allowed;
 }
 
 .theme-modal-container button:focus {
     border: 1px solid grey;
 }
-.theme-modal-container button:hover {
+.theme-modal-container button:hover:not(:disabled) {
     background-color: var(--tree-node-bg-selected) !important;
 }
 

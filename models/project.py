@@ -157,6 +157,18 @@ class Project(DB):
         )
 
 
+    def get_entry_point(self, epid=None):
+        if epid is None:
+            return self.get_default_entry_point()
+        ep = self.execute(
+            f"SELECT file, function FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};",
+            fetch_one=True
+        )
+        if ep is None:
+            raise Exception(f"Entry point {epid} not found.")
+        return ep
+
+
     def get_properties(self):
         eps = self.execute(f'''
             SELECT
@@ -185,11 +197,12 @@ class Project(DB):
         }
 
 
-    def _get_file_dict(self, name, path):
+    def _get_file_dict(self, path):
         '''
         returns a dictionary describing a file with keys:
-            name:str, type:str, path:str, language:str, selected:bool, src:str
+            name:str, type:str, path:str, selected:bool
         '''
+        name = os.path.basename(path)
         ext = os.path.splitext(path)[-1]
         out = {
             'name': name,
@@ -198,12 +211,10 @@ class Project(DB):
             'language': SUPPORTED_LANGUAGES.get(ext, ''),
             'selected': (name == "main.py"),
         }
-        with open(path, 'r') as file:
-            out['src'] = file.read()
         return out
 
 
-    def _get_folder_dict(self, name, path):
+    def _get_folder_dict(self, path):
         '''
         returns a dictionary describing a folder with keys:
             name:str, type:str, path:str, open:bool, children:list
@@ -211,7 +222,7 @@ class Project(DB):
         elements of 'children' can be files of folders
         '''
         return {
-            'name': name,
+            'name': os.path.basename(path),
             'type': 'folder',
             'path': os.path.relpath(path, self.src_path),
             'open': True, # open by default??
@@ -232,10 +243,10 @@ class Project(DB):
                 continue
 
             if os.path.isfile(f):
-                d.append(self._get_file_dict(name, f))
+                d.append(self._get_file_dict(f))
 
             elif os.path.isdir(f):
-                d.append(self._get_folder_dict(name, f))
+                d.append(self._get_folder_dict(f))
         return d
 
 
@@ -255,6 +266,22 @@ class Project(DB):
         }]
 
 
+    def get_file_src(self, path):
+        '''
+        returns a dictionary with file src:
+            src:str, language:str
+        '''
+        full_path = os.path.join(self.src_path, path)
+        if not os.path.isfile(full_path):
+            raise ValueError(f"{path} not a file")
+
+        ext = os.path.splitext(path)[-1]
+        with open(full_path, 'r') as file:
+            return {
+                'language': SUPPORTED_LANGUAGES.get(ext, ''),
+                'src': file.read()
+            }
+
 
     def new_file(self, path, name):
         src = os.path.join(self.src_path, path)
@@ -267,7 +294,7 @@ class Project(DB):
 
         with open(fpath, 'w') as f:
             f.write('\n')
-        return self._get_file_dict(name, fpath)
+        return self._get_file_dict(fpath)
 
 
     def save_file(self, path, src):
@@ -295,7 +322,7 @@ class Project(DB):
             raise Exception(f"Folder exists - {os.path.join(path, name)}")
 
         os.makedirs(fpath)
-        return self._get_folder_dict(name, fpath)
+        return self._get_folder_dict(fpath)
 
 
     def delete_folder(self, path, force: bool=False):
@@ -341,7 +368,7 @@ class Project(DB):
 
 
 
-    def _run(self):
+    def _run(self, epid=None):
         self._is_running = True
         orig_dir = os.getcwd()
         orig_syspath = sys.path.copy()
@@ -352,7 +379,7 @@ class Project(DB):
         os.chdir(self.src_path)
 
         # read config
-        ep = self.get_default_entry_point()
+        ep = self.get_entry_point(epid)
         print(ep)
         main_file = os.path.realpath(ep.file)
         main_function = ep.function
@@ -391,10 +418,10 @@ class Project(DB):
         return res
 
 
-    def _run_print_wrapper(self, msg_cb):
+    def _run_print_wrapper(self, epid, msg_cb):
         with print_capture(msg_cb):
             try:
-                self._run()
+                self._run(epid)
             except:
                 err = traceback.format_exc()
                 err = err.replace(os.path.join(self.workspace_path, self.user.email), '')
@@ -411,13 +438,13 @@ class Project(DB):
     #     return msgs
 
 
-    def create_run_thread(self, msg_queue):
+    def create_run_thread(self, epid, msg_queue):
 
         def _thread_target():
             def _cb(msg):
                 msg_queue.put_nowait(str(msg))
 
-            self._run_print_wrapper(msg_cb=_cb)
+            self._run_print_wrapper(epid, msg_cb=_cb)
 
         t = threading.Thread(target=_thread_target)
         t.daemon = True # makes sure it dies with parent process

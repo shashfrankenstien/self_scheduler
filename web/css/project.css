@@ -1,7 +1,76 @@
-#project-properties-modal {
-    white-space: pre;
+#project-props-modal {
     overflow: scroll;
-    height: 100%;
+    min-height: 100%;
     width: 100%;
-    margin: 20px 1px 10px 20px;
+    /* margin: 20px 1px 10px 20px; */
+    display: flex;
+    flex-direction: column;
+    padding-top: 1rem;
+    background-color: var(--bg-color);
 }
+
+#project-props-modal .tab-bar {
+    display: flex;
+}
+
+#project-props-modal .tab-bar > .tab-bar-btn {
+    padding: 0.5rem;
+    padding-inline: 2rem;
+    border-radius: .25rem .25rem 0 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+
+#project-props-modal .tab-bar > .tab-bar-btn.selected {
+    background-color: var(--editor-monokai-bg);
+}
+
+#project-props-modal .tab {
+    display: none;
+    background-color: var(--editor-monokai-bg);
+    flex-grow: 1;
+    padding: 0.5rem;
+    position: relative;
+}
+
+#project-props-modal .tab .new-entry {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--light-border-color);
+    border-radius: 100%;
+    bottom: 1rem;
+    right: 0.5rem;
+}
+
+
+
+#project-props-modal .tab.selected {
+    display: block;
+}
+
+
+
+
+#project-props-modal .entry-point-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
+#project-props-modal .entry-point-row > .r {
+    border: 1px solid var(--light-border-color);
+    padding: 0.5rem;
+    border-radius: 0.2rem;
+}
+
+#project-props-modal .entry-point-row > .h {
+    margin: 0;
+    padding: 0.3rem;
+}
+

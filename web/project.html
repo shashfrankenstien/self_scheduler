@@ -40,12 +40,19 @@
     </div>
 
     <button id="settings-btn" style="position: fixed; bottom:10px;left:10px" onclick="openProjectMenu(event)">Menu</button>
-    <!-- <button id="settings-btn" style="position: fixed; bottom:40px;left:10px" onclick="openProjectProperties()">Properties</button>
-    <button id="run-btn" style="position: fixed; bottom:10px;left:10px" onclick="RUN()">Run main.py (ctrl+b)</button> -->
 </body>
 
-<div style="display: none;" id="project-properties-modal">
-
+<div style="display: none;" id="project-props-modal">
+    <div class="tab-bar">
+        <div class="tab-bar-btn selected" onclick="projPropsSelect(this, 'entry-points')">Entry Points</div>
+        <div class="tab-bar-btn" onclick="projPropsSelect(this, 'schedules')">Schedules</div>
+    </div>
+    <div class="tab selected" id="entry-points">
+        <button class="new-entry" onclick="addNewEntry('entry-points')">+</button>
+    </div>
+    <div class="tab" id="schedules">
+        <button class="new-entry" onclick="addNewEntry('schedules')">+</button>
+    </div>
 </div>
 
 <script src="/static/js/utils.js"></script>
@@ -57,6 +64,6 @@
     const TREE = new FileTree(document.querySelector('.file-tree-container'))
 </script>
 <script src="/static/js/project-main.js"></script>
-<script src="/static/js/project-settings.js"></script>
+<script src="/static/js/project-menu.js"></script>
 
 </html>

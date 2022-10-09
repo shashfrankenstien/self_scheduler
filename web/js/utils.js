@@ -20,6 +20,9 @@ const modFetch = async (endpoint, method, body) => {
 
 
 const streamFetch = async (endpoint, method, body, streamcb) => {
+    if (body) {
+        body = JSON.stringify(body)
+    }
     const response = await fetch(endpoint, {
         method,
         headers: {'Content-Type': 'application/json'},

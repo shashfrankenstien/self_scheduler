@@ -53,11 +53,11 @@ const SAVE = () => {
 
 
 var IS_RUNNING = false
-const RUN = () => {
+const RUN = (epid) => {
     if (!IS_RUNNING) {
         IS_RUNNING = true
         const outputElem = openOutputWindow()
-        API.runAsync((msg)=>{
+        API.runAsync(epid, (msg)=>{
             outputElem.innerText = outputElem.innerText + msg
             outputElem.scrollTop = outputElem.scrollHeight
         }).then(()=>{
@@ -179,13 +179,17 @@ window.addEventListener('load', (event) => {
                     editorElem.setAttribute('data-path', item.path)
                 }
 
-                if (!item.model)
-                    item.model = monaco.editor.createModel(item.src, item.language)
-
-                item.model.onDidChangeContent(evt=>{
-                    TREE.markItemDirty(item)
-                })
-                window.editor.setModel(item.model)
+                if (item.model) {
+                    window.editor.setModel(item.model)
+                } else {
+                    API.fileSrc(item.path).then(i=>{
+                        item.model = monaco.editor.createModel(i.src, i.language)
+                        item.model.onDidChangeContent(evt=>{
+                            TREE.markItemDirty(item)
+                        })
+                        window.editor.setModel(item.model)
+                    }).catch(err=>AlertModal.open(err))
+                }
             }
         }
     });

@@ -217,6 +217,15 @@ def new_file(project_hash):
 	return json.dumps({'success': res})
 
 
+@app.route("/project/<project_hash>/file/src", methods=['POST'])
+@cookie_login_json
+def file_src(project_hash):
+	P = request.user.get_project(project_hash)
+	data = request.json
+	path = str(data['path']).strip()
+	return json.dumps({'success': P.get_file_src(path)})
+
+
 @app.route("/project/<project_hash>/file/save", methods=['POST'])
 @cookie_login_json
 def save_file(project_hash):
@@ -266,12 +275,13 @@ def rename(project_hash):
 	return json.dumps({'success': res})
 
 
-@app.route("/project/<project_hash>/run", methods=['GET'])
+@app.route("/project/<project_hash>/run", methods=['POST'])
 @cookie_login_json
 def run(project_hash):
 	P = request.user.get_project(project_hash)
+	epid = request.json.get('epid')
 	msg_queue = queue.Queue()
-	run_thread = P.create_run_thread(msg_queue=msg_queue)
+	run_thread = P.create_run_thread(epid, msg_queue=msg_queue)
 
 	def progress():
 		run_thread.start()

@@ -25,6 +25,11 @@ class SS_Project_API {
         })
     }
 
+    fileSrc(path) {
+        return modFetch(`/project/${this.project}/file/src`, "POST", {path})
+    }
+
+
     saveFile(path, src) {
         console.log("save", path)
         return modFetch(`/project/${this.project}/file/save`, "POST", {path, src})
@@ -65,8 +70,8 @@ class SS_Project_API {
         })
     }
 
-    runAsync(msg_cb) {
-        return streamFetch(`/project/${this.project}/run`, "GET", null, msg_cb)
+    runAsync(epid, msg_cb) {
+        return streamFetch(`/project/${this.project}/run`, "POST", {epid}, msg_cb)
     }
 }
 
