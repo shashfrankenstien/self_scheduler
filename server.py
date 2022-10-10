@@ -275,9 +275,33 @@ def rename(project_hash):
 	return json.dumps({'success': res})
 
 
+
+@app.route("/project/<project_hash>/entry-point/new", methods=['POST'])
+@cookie_login_json
+def new_entrypoint(project_hash):
+	P = request.user.get_project(project_hash)
+	data = request.json
+	file = str(data['file']).strip()
+	func = str(data['func']).strip()
+	is_default = data.get('make_default', False)
+	P.create_entry_point(file, func, is_default=is_default)
+	return json.dumps({'success': P.get_all_entry_points()})
+
+
+@app.route("/project/<project_hash>/entry-point/delete", methods=['POST'])
+@cookie_login_json
+def delete_entrypoint(project_hash):
+	P = request.user.get_project(project_hash)
+	epid = request.json['epid']
+	P.delete_entry_point(epid)
+	return json.dumps({'success': True})
+
+
+
 @app.route("/project/<project_hash>/run", methods=['POST'])
 @cookie_login_json
 def run(project_hash):
+	# print(app.url_map)
 	P = request.user.get_project(project_hash)
 	epid = request.json.get('epid')
 	msg_queue = queue.Queue()

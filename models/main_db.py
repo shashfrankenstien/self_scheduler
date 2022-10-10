@@ -61,9 +61,10 @@ class SelfSchedulerDB(DB):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 project_id INTEGER NOT NULL,
                 file TEXT NOT NULL,
-                function TEXT NOT NULL,
+                func TEXT NOT NULL,
                 is_default INTEGER DEFAULT 0,
                 create_dt TEXT NOT NULL,
+                UNIQUE(project_id, file, func),
                 FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
             )
         ''', conn=conn)
@@ -74,9 +75,9 @@ class SelfSchedulerDB(DB):
                 ep_id INTEGER NOT NULL,
                 every TEXT DEFAULT NULL,
                 at TEXT DEFAULT NULL,
+                is_scheduled INTEGER DEFAULT 0,
                 last_run_dt TEXT DEFAULT NULL,
                 last_run_res TEXT DEFAULT NULL,
-                is_scheduled INTEGER DEFAULT 0,
                 create_dt TEXT NOT NULL,
                 FOREIGN KEY(ep_id) REFERENCES entry_points(id) ON DELETE CASCADE
             )

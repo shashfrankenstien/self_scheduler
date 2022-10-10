@@ -4,6 +4,8 @@ import fnmatch, glob
 import traceback
 from datetime import datetime as dt
 import threading
+import re
+import sqlite3
 
 from .base import DB
 from .capture import print_capture
@@ -16,17 +18,17 @@ def main():
 
 '''
 
-SRC_CONFIG_STARTER = '''
-[main]
-file = main.py
-function = main
+# SRC_CONFIG_STARTER = '''
+# [main]
+# file = main.py
+# func = main
 
-[schedule]
-every =
-at =
-timezone =
+# [schedule]
+# every =
+# at =
+# timezone =
 
-'''
+# '''
 
 
 SRC_README_STARTER = '''
@@ -34,20 +36,6 @@ Self Scheduler Project
 =======================
 
 This is a project created to be used with self-scheduler application.
-
-    - Project execution is defined by a main.ini file
-
-
-main.ini example
------------------
-
-[main]
-file = main.py
-function = main
-
-[schedule]
-every = day
-at = 08:00
 
 '''
 
@@ -138,30 +126,67 @@ class Project(DB):
         if ep is not None:
             return ep
 
-        self.execute(f'''
-            INSERT INTO entry_points (
-                project_id, file, function, is_default, create_dt
-            )
-            VALUES (
-                '{self.project_id}', 'main.py', 'main', 1,
-                '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}'
-            );
-        ''')
+        self.create_entry_point("main.py", "main", is_default=True)
         return self.get_default_entry_point()
 
 
     def get_default_entry_point(self):
         return self.execute(
-            f"SELECT file, function FROM entry_points WHERE project_id = {self.project_id} AND is_default = 1;",
+            f"SELECT file, func FROM entry_points WHERE project_id = {self.project_id} AND is_default = 1;",
             fetch_one=True
         )
+
+
+    def create_entry_point(self, file, func, is_default: bool=False):
+        src_dict = self.get_file_src(path=file)
+        definition = f"^def\s*{func}\s*\(\):\s*$"
+
+        matches = []
+        for line in src_dict['src'].split('\n'):
+            matches = re.findall(definition, line.strip())
+            if matches:
+                break
+
+        if not matches:
+            raise Exception(f"function '{func}' not found")
+
+        conn = self.get_connection()
+        try:
+            if is_default:
+                # mark all others as not default
+                self.execute(f'''
+                    UPDATE entry_points
+                    SET is_default = 0
+                    WHERE project_id = {self.project_id}
+                ''', conn=conn)
+
+            self.execute(f'''
+                INSERT INTO entry_points (
+                    project_id, file, func, is_default, create_dt
+                )
+                VALUES (
+                    {self.project_id}, '{file}', '{func}', {1 if is_default else 0},
+                    '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}'
+                );
+            ''', conn=conn)
+            conn.commit()
+        except sqlite3.IntegrityError as e:
+            if 'unique constraint failed' in str(e).lower():
+                raise Exception("Entry point already exists") from e
+            raise
+        finally:
+            conn.close()
+
+
+    def delete_entry_point(self, epid):
+        self.execute(f'''DELETE FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};''')
 
 
     def get_entry_point(self, epid=None):
         if epid is None:
             return self.get_default_entry_point()
         ep = self.execute(
-            f"SELECT file, function FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};",
+            f"SELECT file, func FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};",
             fetch_one=True
         )
         if ep is None:
@@ -169,19 +194,26 @@ class Project(DB):
         return ep
 
 
-    def get_properties(self):
+    def get_all_entry_points(self):
         eps = self.execute(f'''
             SELECT
-            p.name || ':' || ep.file || ':' || ep.function as name,
+            p.name || ':' || ep.file || ':' || ep.func as name,
             ep.*
             FROM projects p
             LEFT JOIN entry_points ep
                 ON p.id = ep.project_id
             WHERE p.id = {self.project_id}
+            order by ep.id
         ''')
+        if len(eps)==1 and eps[0].name is None:
+            return []
+        return [ep._asdict() for ep in eps]
+
+
+    def get_full_schedule(self):
         scheds = self.execute(f'''
             SELECT
-            p.name || ':' || ep.file || ':' || ep.function as name,
+            p.name || ':' || ep.file || ':' || ep.func as name,
             sched.*
             FROM projects p
             LEFT JOIN entry_points ep
@@ -190,10 +222,17 @@ class Project(DB):
                 ON ep.id = sched.ep_id
             WHERE p.id = {self.project_id}
             AND sched.id IS NOT NULL
+            order by sched.id
         ''')
+        if len(scheds)==1 and scheds[0].name is None:
+            return []
+        return [s._asdict() for s in scheds]
+
+
+    def get_properties(self):
         return {
-            'end_points': [ep._asdict() for ep in eps],
-            'schedule': [s._asdict() for s in scheds],
+            'entry_points':self.get_all_entry_points(),
+            'schedule': self.get_full_schedule(),
         }
 
 
@@ -273,7 +312,7 @@ class Project(DB):
         '''
         full_path = os.path.join(self.src_path, path)
         if not os.path.isfile(full_path):
-            raise ValueError(f"{path} not a file")
+            raise ValueError(f"'{path}' not a file")
 
         ext = os.path.splitext(path)[-1]
         with open(full_path, 'r') as file:
@@ -382,7 +421,7 @@ class Project(DB):
         ep = self.get_entry_point(epid)
         print(ep)
         main_file = os.path.realpath(ep.file)
-        main_function = ep.function
+        main_function = ep.func
 
         if not os.path.isfile(main_file):
             raise FileNotFoundError(f"{main_file} file not found")

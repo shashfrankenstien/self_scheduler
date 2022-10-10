@@ -8,7 +8,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding-top:40px;
-    background-color: var(--editor-monokai-bg);
+    background-color: var(--editor-theme-bg);
     color: white;
 }
 .login-signup-box label,
@@ -27,7 +27,7 @@ body {
 .login-signup-box a,
 .login-signup-box button {
     margin-top: 15px;
-    background-color: var(--editor-monokai-bg);
+    background-color: var(--editor-theme-bg);
     color: white;
     cursor: pointer;
 }

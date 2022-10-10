@@ -10,18 +10,14 @@ class SS_Project_API {
         })
     }
 
-    loadTree(treeObj) {
-        return modFetch(`/project/${this.project}/tree`, "GET").then(res=>{
-            treeObj.showTree(res);
-        })
+    loadTree() {
+        return modFetch(`/project/${this.project}/tree`, "GET")
     }
 
     newFile(path, name) {
         return modFetch(`/project/${this.project}/file/new`, "POST", {
             path,
             name
-        }).then(res=>{
-            return res
         })
     }
 
@@ -39,8 +35,6 @@ class SS_Project_API {
         console.log("delete", path)
         return modFetch(`/project/${this.project}/file/delete`, "POST", {
             path,
-        }).then(res=>{
-            return res
         })
     }
 
@@ -48,16 +42,12 @@ class SS_Project_API {
         return modFetch(`/project/${this.project}/folder/new`, "POST", {
             path,
             name
-        }).then(res=>{
-            return res
         })
     }
 
     deleteFolder(path) {
         return modFetch(`/project/${this.project}/folder/delete`, "POST", {
             path
-        }).then(res=>{
-            return res
         })
     }
 
@@ -65,10 +55,23 @@ class SS_Project_API {
         return modFetch(`/project/${this.project}/rename`, "POST", {
             path,
             name
-        }).then(res=>{
-            return res
         })
     }
+
+
+
+    newEntryPoint(file, func, make_default) {
+        return modFetch(`/project/${this.project}/entry-point/new`, "POST", {
+            file,
+            func,
+            make_default
+        })
+    }
+
+    deleteEntryPoint(epid) {
+        return modFetch(`/project/${this.project}/entry-point/delete`, "POST", {epid})
+    }
+
 
     runAsync(epid, msg_cb) {
         return streamFetch(`/project/${this.project}/run`, "POST", {epid}, msg_cb)

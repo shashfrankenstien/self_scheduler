@@ -82,6 +82,7 @@ const commonRename = (item) => {
 const folder_contextmenu = (ev, item) => {
     ev.preventDefault();
     let menu = new ContextMenu(ev.pageX, ev.pageY)
+    menu.addOption(menu.createCopyOption("Copy Path", item.path))
 
     if (item.path && item.path!=="/") {
         menu.addNewOption("Rename", ()=>{
@@ -130,6 +131,7 @@ const folder_contextmenu = (ev, item) => {
 const file_contextmenu = (ev, item) => {
     ev.preventDefault();
     let menu = new ContextMenu(ev.pageX, ev.pageY)
+    menu.addOption(menu.createCopyOption("Copy Path", item.path))
 
     menu.addNewOption("Rename", ()=>{
         commonRename(item)
@@ -194,6 +196,8 @@ window.addEventListener('load', (event) => {
         }
     });
 
-    API.loadTree(TREE).catch(err=>AlertModal.open(err))
+    API.loadTree().then(res=>{
+        TREE.showTree(res);
+    }).catch(err=>AlertModal.open(err))
 
 })

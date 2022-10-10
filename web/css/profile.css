@@ -53,7 +53,7 @@ body {
 }
 
 #profile-projects .project:hover {
-    background-color: var(--editor-monokai-bg);
+    background-color: var(--editor-theme-bg);
     border-color: transparent;
 }
 
@@ -71,7 +71,7 @@ body {
 
 .top-right-btn:hover {
     border: 1px solid var(--light-border-color);
-    background-color: var(--editor-monokai-bg);
+    background-color: var(--editor-theme-bg);
 }
 
 

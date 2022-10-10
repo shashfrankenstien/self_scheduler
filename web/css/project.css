@@ -23,12 +23,14 @@
 
 
 #project-props-modal .tab-bar > .tab-bar-btn.selected {
-    background-color: var(--editor-monokai-bg);
+	background-color: var(--editor-theme-bg);
+    /* background-color: var(--editor-theme-bg); */
 }
 
 #project-props-modal .tab {
     display: none;
-    background-color: var(--editor-monokai-bg);
+    /* background-color: var(--editor-theme-bg); */
+	background-color: var(--editor-theme-bg);
     flex-grow: 1;
     padding: 0.5rem;
     position: relative;
@@ -40,11 +42,12 @@
     justify-content: center;
     align-items: center;
     width: 2rem;
-    height: 2rem;
+    aspect-ratio: 1;
     border: 1px solid var(--light-border-color);
     border-radius: 100%;
     bottom: 1rem;
     right: 0.5rem;
+    font-size: 1.5rem;
 }
 
 
@@ -56,21 +59,45 @@
 
 
 
-#project-props-modal .entry-point-row {
+#project-props-modal .entry-point-row,
+#project-props-modal .entry-point-header {
     width: 100%;
     display: grid;
-    grid-template-columns: 2fr 2fr 2fr 1fr 1fr 1fr;
+    grid-template-columns: 3fr 2fr 2fr 1fr 1fr 1fr;
     gap: 1rem;
 }
 
-#project-props-modal .entry-point-row > .r {
+#project-props-modal .entry-point-row > * {
     border: 1px solid var(--light-border-color);
     padding: 0.5rem;
     border-radius: 0.2rem;
+    margin-bottom: 0.5rem;
 }
 
-#project-props-modal .entry-point-row > .h {
+#project-props-modal .entry-point-header > * {
     margin: 0;
     padding: 0.3rem;
 }
 
+
+
+.new-property-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 80%;
+    width: 75%;
+}
+
+.new-property-modal > input {
+    background-color: var(--bg-color);
+    border: 1px solid black;
+    color: white;
+}
+
+.new-property-modal > * {
+    width: 100%;
+    padding: 5px;
+}
