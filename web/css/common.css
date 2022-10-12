@@ -14,6 +14,8 @@
     --light-border-color: rgb(59, 59, 56);
     --lighter-border-color: rgb(131, 131, 131);
 
+    --button-hover-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
     font-size: 16px;
 }
 
@@ -99,6 +101,7 @@ html, body {
     outline: none;
     user-select: none;
     cursor: pointer;
+    transition: 0.1s ease-in;
 }
 
 .theme-modal-container button:disabled {
@@ -110,6 +113,8 @@ html, body {
 }
 .theme-modal-container button:hover:not(:disabled) {
     background-color: var(--tree-node-bg-selected) !important;
+    box-shadow: var(--button-hover-shadow);
+    border-color: transparent !important;
 }
 
 

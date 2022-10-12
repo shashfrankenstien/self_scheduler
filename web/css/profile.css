@@ -55,6 +55,7 @@ body {
 #profile-projects .project:hover {
     background-color: var(--editor-theme-bg);
     border-color: transparent;
+    box-shadow: var(--button-hover-shadow);
 }
 
 
@@ -66,12 +67,12 @@ body {
     border: 1px solid transparent;
     border-radius: 5px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.1s ease-in;
 }
 
 .top-right-btn:hover {
-    border: 1px solid var(--light-border-color);
     background-color: var(--editor-theme-bg);
+    box-shadow: var(--button-hover-shadow);
 }
 
 
@@ -99,7 +100,7 @@ body {
     margin-top: 15px;
     color: white;
     cursor: pointer;
-    border: 1px solid grey;
+    border: 1px solid var(--light-border-color);
     background-color: var(--tree-node-bg-selected);
     transition: 0.1s;
 }

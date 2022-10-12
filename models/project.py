@@ -197,7 +197,7 @@ class Project(DB):
     def get_all_entry_points(self):
         eps = self.execute(f'''
             SELECT
-            p.name || ':' || ep.file || ':' || ep.func as name,
+            p.name || '::' || ep.file || '::' || ep.func as name,
             ep.*
             FROM projects p
             LEFT JOIN entry_points ep
@@ -213,7 +213,7 @@ class Project(DB):
     def get_full_schedule(self):
         scheds = self.execute(f'''
             SELECT
-            p.name || ':' || ep.file || ':' || ep.func as name,
+            p.name || '::' || ep.file || '::' || ep.func as name,
             sched.*
             FROM projects p
             LEFT JOIN entry_points ep

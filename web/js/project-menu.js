@@ -1,7 +1,7 @@
 
 
-const projectPropsModal = new Modal(document.getElementById("project-props-modal"), {
-    width: '800px',
+const projectPropsModal = new ModalDrawerRight(document.getElementById("project-props-modal"), {
+    width: '500px',
     height: '500px',
     displayStyle: 'flex',
     classList: ['theme-modal-container'],
@@ -32,22 +32,20 @@ const displayEntryPoints = (eps, epElem) => {
     epElem = epElem || document.getElementById("entry-points")
     if(epElem) {
         epElem.innerHTML = ""
-        const headers = document.createElement("div")
-        headers.classList.add("entry-point-header")
-        headers.innerHTML = `
-            <span>Name</span>
-            <span>File</span>
-            <span>Function</span>
-        `
-        epElem.appendChild(headers)
+        // const headers = document.createElement("div")
+        // headers.classList.add("entry-point-header")
+        // headers.innerHTML = `
+        //     <span>Name</span>
+        //     <span>File</span>
+        //     <span>Function</span>
+        // `
+        // epElem.appendChild(headers)
 
         for (const ep of eps) {
             const container = document.createElement("div")
             container.classList.add("entry-point-row")
             container.innerHTML = `
                 <span>${ep.name}</span>
-                <span>${ep.file}</span>
-                <span>${ep.func}</span>
                 <span>${ep.is_default ? "Default": "-"}</span>
                 <button ${ep.is_default ? "disabled" : ""} onclick="deleteEntryPoint(${ep.id}, this)">Delete</button>
                 <button onclick="RUN_EP(${ep.id})">Run</button>
