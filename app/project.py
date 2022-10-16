@@ -91,6 +91,38 @@ class Project(DB):
         return self._src_path
 
 
+    def delete(self):
+        shutil.rmtree(self.src_path)
+        conn = self.get_connection()
+        try:
+            self.execute("PRAGMA foreign_keys=ON", conn=conn) # required for foreign key cascade on delete
+            self.execute(f"DELETE FROM projects WHERE id = {self.project_id};", conn=conn)
+        finally:
+            conn.commit()
+            conn.close()
+        return True
+
+
+    def rename(self, new_name):
+        new_name = str(new_name).strip()
+        # can't reset and use self.src_path as it will create the new folder preemptively
+        old_src_path = self.src_path
+        new_src_path = os.path.join(os.path.dirname(old_src_path), new_name)
+
+        if os.path.isdir(new_src_path):
+            raise Exception(f"Project named '{new_name}' already exists")
+
+        os.rename(old_src_path, new_src_path)
+        self.execute(f'''UPDATE projects
+            SET name = '{new_name}'
+            WHERE id = {self.project_id};
+        ''')
+
+        self.name = new_name
+        self._src_path = None # reset src_path
+        return True
+
+
     def create_default_files(self):
         '''create default files. should be called the first time a project is created'''
         main_path = os.path.join(self.src_path, 'main.py')
@@ -98,10 +130,14 @@ class Project(DB):
             with open(main_path, 'w') as m:
                 m.write(SRC_MAIN_PYTHON_STARTER)
 
+        readme = [SRC_README_STARTER.strip()+'\n']
+        readme.append(self.name + '\n' + "="*(len(self.name)+5))
+        readme.append(self.descr.strip())
+
         readme_path = os.path.join(self.src_path, 'README.txt')
         if not os.path.isfile(readme_path):
             with open(readme_path, 'w') as m:
-                m.write(SRC_README_STARTER.strip()+'\n')
+                m.write('\n\n'.join(readme)+'\n')
 
 
     def create_default_entry_point(self):
@@ -166,7 +202,13 @@ class Project(DB):
 
 
     def delete_entry_point(self, epid):
-        self.execute(f'''DELETE FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};''')
+        conn = self.get_connection()
+        try:
+            self.execute("PRAGMA foreign_keys=ON", conn=conn) # required for foreign key cascade on delete
+            self.execute(f'''DELETE FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};''')
+        finally:
+            conn.commit()
+            conn.close()
 
 
     def get_entry_point(self, epid=None):
@@ -415,7 +457,7 @@ class Project(DB):
         return True
 
 
-    def rename(self, path, name):
+    def rename_object(self, path, name):
         src = os.path.join(self.src_path, path)
         if not os.path.isdir(src) and not os.path.isfile(src):
             raise Exception(f"Path not found - {path}")

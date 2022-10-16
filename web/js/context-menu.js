@@ -75,7 +75,9 @@ class ContextMenu {
 	}
 
 	close() {
-		this.elem.blur()
+		if (this.elem) {
+			this.elem.blur()
+		}
 	}
 }
 

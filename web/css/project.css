@@ -2,7 +2,7 @@
     position: fixed;
     bottom: 1rem;
     left: 1rem;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     padding: 0.2rem 1.2rem;
 }
 
@@ -16,6 +16,8 @@
     flex-direction: column;
     padding-top: 1rem;
     background-color: var(--bg-color);
+    overflow-y: hidden;
+    overflow-x: auto;
 }
 
 #project-props-modal .tab-bar {
@@ -51,11 +53,12 @@
     justify-content: center;
     align-items: center;
     width: 2.5rem;
+    height: 2.5rem;
     aspect-ratio: 1;
     border-radius: 100%;
     bottom: 1.5rem;
     right: 1rem;
-    font-size: 2rem;
+    font-size: 1.5rem;
 }
 
 

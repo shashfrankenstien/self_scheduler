@@ -51,6 +51,10 @@ const ConfirmModal = new ModalConfirm({
     classList: ['theme-modal-container']
 })
 
+const PromptModal = new ModalPrompt({
+    classList: ['theme-modal-container']
+})
+
 
 function createElementFromHTML(htmlString) {
     var div = document.createElement('div');

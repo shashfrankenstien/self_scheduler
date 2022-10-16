@@ -99,6 +99,12 @@ html, body {
     transition: 0.1s ease-in
 }
 
+.theme-modal-container input {
+    background-color: var(--bg-color);
+    border: 1px solid black;
+    color: white;
+}
+
 .theme-modal-container button,
 .gen-btn {
     background-color: transparent !important;

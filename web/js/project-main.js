@@ -70,12 +70,13 @@ const RUN = (epid) => {
 }
 
 const commonRename = (item) => {
-    const name = prompt("New Name:", item.name)
-    if (name) {
-        API.rename(item.path, name).then(res=>{
-            TREE.renameItem(item, name)
-        }).catch(err=>AlertModal.open(err))
-    }
+    PromptModal.open("New Name:", item.name, name=>{
+        if (name) {
+            API.rename(item.path, name).then(res=>{
+                TREE.renameItem(item, name)
+            }).catch(err=>AlertModal.open(err))
+        }
+    })
 }
 
 
@@ -92,23 +93,25 @@ const folder_contextmenu = (ev, item) => {
         })
     }
     menu.addNewOption("New File", ()=>{
-        const name = prompt("File Name:")
-        if (name) {
-            API.newFile(item.path, name).then(res=>{
-                console.log(res)
-                TREE.newItem(res, item)
-            }).catch(err=>AlertModal.open(err))
-        }
+        PromptModal.open("File Name:", name=>{
+            if (name) {
+                API.newFile(item.path, name).then(res=>{
+                    console.log(res)
+                    TREE.newItem(res, item)
+                }).catch(err=>AlertModal.open(err))
+            }
+        })
         menu.close()
     })
     menu.addNewOption("New Folder", ()=>{
-        const name = prompt("Folder Name:")
-        if (name) {
-            API.newFolder(item.path, name).then(res=>{
-                console.log(res)
-                TREE.newItem(res, item)
-            }).catch(err=>AlertModal.open(err))
-        }
+        PromptModal.open("Folder Name:", name=>{
+            if (name) {
+                API.newFolder(item.path, name).then(res=>{
+                    console.log(res)
+                    TREE.newItem(res, item)
+                }).catch(err=>AlertModal.open(err))
+            }
+        })
         menu.close()
     })
     if (item.path && item.path!=="/") {

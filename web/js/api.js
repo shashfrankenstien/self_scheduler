@@ -50,7 +50,7 @@ class SS_Project_API {
     }
 
     rename(path, name) {
-        return modFetch(`/project/${this.project}/rename`, "POST", {
+        return modFetch(`/project/${this.project}/object/rename`, "POST", {
             path, name
         })
     }

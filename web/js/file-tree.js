@@ -61,7 +61,11 @@ class FileTree {
         let touchTimeout = null
         node.addEventListener('touchstart', (ev)=>{
             ev.preventDefault()
-            touchTimeout = setTimeout(()=>ctxMenu(ev, item), 1000)
+            touchTimeout = setTimeout(()=>{
+                clearTimeout(touchTimeout)
+                touchTimeout = null
+                ctxMenu(ev, item)
+            }, 1000)
         });
         node.addEventListener('touchend', (ev)=>{
             if (touchTimeout) {

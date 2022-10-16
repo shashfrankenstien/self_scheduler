@@ -8,14 +8,15 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 50vw;
+    min-width: 100ch;
+    width: 55vw;
     color: var(--tree-node-fg-color);
     /* border: 1px solid var(--tree-node-fg-color); */
 }
 
 @media (orientation: portrait) {
     .profile-container {
-        width: 90vw;
+        min-width: 90vw;
     }
 }
 
@@ -32,7 +33,6 @@ body {
     max-width: 100%;
     min-height: 6rem;
     padding: 0.5rem;
-    /* border: 1px solid var(--light-border-color); */
 }
 
 #profile-projects {
@@ -41,22 +41,41 @@ body {
     grid-template-columns: repeat(2, 1fr);
 }
 
+
+
+
+
+/* project list button */
 #profile-projects .project {
-    min-height: 50px;
-    border: 1px solid var(--light-border-color);
-    border-radius: 10px;
+    min-height: 3rem;
+    border-radius: .5rem;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: 0.2s;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 #profile-projects .project:hover {
-    background-color: var(--editor-theme-bg);
-    border-color: transparent;
-    box-shadow: var(--button-hover-shadow);
+    background-color: var(--editor-theme-bg) !important;
 }
+
+#profile-projects .project > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+#profile-projects .project > div:first-child {
+    flex: 2;
+}
+
+#profile-projects .project > div:last-child {
+    flex: 1;
+    border-left: 1px solid var(--light-border-color);
+}
+/* end project list button */
+
 
 
 .top-right-btn {
@@ -65,7 +84,6 @@ body {
     right: 0.5rem;
     border: none !important;
 }
-
 
 #new-project-modal {
     display: flex;

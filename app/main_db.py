@@ -163,18 +163,26 @@ class User(DB):
 
 
     def get_projects_dict(self):
-        projs = self.execute(f'''SELECT * FROM projects WHERE user_id = {self.user_id}''')
-        out = []
-        for res in projs:
-            out.append(res._asdict())
-        return out
+        projs = self.execute(f'''
+        SELECT p.*,
+        count(ep.id) AS entry_points,
+        count(sch.id) AS schedules,
+        sum(sch.is_scheduled) AS schedules_enabled
+        FROM projects p
+        LEFT JOIN entry_points ep
+            ON ep.project_id = p.id
+        LEFT JOIN schedule sch
+            ON sch.ep_id = ep.id
+        WHERE p.user_id = {self.user_id}
+        GROUP BY p.id
+        ''')
+        return [proj._asdict() for proj in projs]
 
 
     def get_project(self, name_hash):
         res = self.execute(f'''SELECT id, name, descr FROM projects WHERE user_id = {self.user_id} AND name_hash = '{name_hash}' ''', fetch_one=True)
         if res is None:
             raise Exception("Project not found")
-
         return Project(self.workspace_path, self.db_path, self, res.id, res.name, name_hash, res.descr)
 
 

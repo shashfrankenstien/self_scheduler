@@ -94,6 +94,7 @@ def cookie_login_json(f):
 			set_user_from_cookie()
 			return json.dumps({'success': f(*args, **kwargs)})
 		except Exception as e:
+			traceback.print_exc()
 			return json.dumps({'error': str(e)})
 
 	_wrapper.__name__ = f.__name__
@@ -112,6 +113,11 @@ def cookie_login_stream(f):
 	return _wrapper
 
 
+
+
+@app.route("/static/<folder>/<filename>", methods=['GET'])
+def static_files(folder, filename):
+	return send_file(os.path.join(CWD, 'web', folder, filename))
 
 
 @app.route("/", methods=['GET'])
@@ -164,13 +170,10 @@ def signup():
 
 
 
-
-@app.route("/static/<folder>/<filename>", methods=['GET'])
-def static_files(folder, filename):
-	return send_file(os.path.join(CWD, 'web', folder, filename))
-
-
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Project API
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 @app.route("/projects", methods=['GET'])
 @cookie_login_json
 def list_projects():
@@ -180,19 +183,34 @@ def list_projects():
 @app.route("/projects/new", methods=['POST'])
 @cookie_login_json
 def new_project():
-	data = json.loads(request.data)
-	project_name = data['name']
-	project_descr = data['descr']
+	project_name = request.json['name']
+	project_descr = request.json['descr']
 	P = request.user.create_new_project(project_name, project_descr)  # basic file structure init
 	return P.name_hash
 
 
+@app.route("/projects/rename", methods=['POST'])
+@cookie_login_json
+def rename_project():
+	P = request.user.get_project(request.json['project_hash'])
+	return P.rename(request.json['new_name'])
+
+
+@app.route("/projects/delete", methods=['POST'])
+@cookie_login_json
+def delete_project():
+	P = request.user.get_project(request.json['project_hash'].strip())
+	return P.delete()
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 @app.route("/project/<project_hash>", methods=['GET'])
 @cookie_login
 def open_project(project_hash):
-	P = request.user.get_project(project_hash)  # basic file structure init
+	request.user.get_project(project_hash)  # basic file structure init
 	# P.create_default_entry_point()
-	P.get_properties()
+	# P.get_properties()
 	return SimpleTemplate.send_file(os.path.join(CWD, 'web', 'project.html'), project_hash=project_hash)
 
 
@@ -272,14 +290,14 @@ def delete_folder(project_hash):
 	return res
 
 
-@app.route("/project/<project_hash>/rename", methods=['POST'])
+@app.route("/project/<project_hash>/object/rename", methods=['POST'])
 @cookie_login_json
-def rename(project_hash):
+def rename_object(project_hash):
 	P = request.user.get_project(project_hash)
 	data = request.json
 	name = str(data['name']).strip()
 
-	res = P.rename(data['path'], name)
+	res = P.rename_object(data['path'], name)
 	return res
 
 
