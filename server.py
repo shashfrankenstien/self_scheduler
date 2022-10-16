@@ -20,15 +20,12 @@ parser.add_argument("--signup-enable", help="Run app with signup page enabled", 
 args = parser.parse_args()
 
 
-if args.workspace_path:
-	WORKSPACE_PATH = args.workspace_path
-else:
-	WORKSPACE_PATH = os.environ.get('SS_WORKSPACE_PATH', 'projects')
+WORKSPACE_PATH = args.workspace_path or os.environ.get('SS_WORKSPACE_PATH', 'projects')
+SIGNUP_ENABLED = args.signup_enable or os.environ.get('SS_SIGNUP_ENABLED') == '1'
 
-if args.signup_enable:
-	SIGNUP_ENABLED = True
-else:
-	SIGNUP_ENABLED = os.environ.get('SS_SIGNUP_ENABLED') == '1'
+print("WORKSPACE_PATH:", WORKSPACE_PATH)
+print("SIGNUP_ENABLED:", SIGNUP_ENABLED)
+
 
 
 app = Flask(__name__)
@@ -95,10 +92,22 @@ def cookie_login_json(f):
 	def _wrapper(*args, **kwargs):
 		try:
 			set_user_from_cookie()
+			return json.dumps({'success': f(*args, **kwargs)})
 		except Exception as e:
 			return json.dumps({'error': str(e)})
 
-		return f(*args, **kwargs)
+	_wrapper.__name__ = f.__name__
+	return _wrapper
+
+
+def cookie_login_stream(f):
+	def _wrapper(*args, **kwargs):
+		try:
+			set_user_from_cookie()
+			return f(*args, **kwargs)
+		except Exception as e:
+			return json.dumps({'error': str(e)})
+
 	_wrapper.__name__ = f.__name__
 	return _wrapper
 
@@ -165,8 +174,7 @@ def static_files(folder, filename):
 @app.route("/projects", methods=['GET'])
 @cookie_login_json
 def list_projects():
-	projs = request.user.get_projects_dict()
-	return json.dumps({'success': projs})
+	return request.user.get_projects_dict()
 
 
 @app.route("/projects/new", methods=['POST'])
@@ -176,7 +184,7 @@ def new_project():
 	project_name = data['name']
 	project_descr = data['descr']
 	P = request.user.create_new_project(project_name, project_descr)  # basic file structure init
-	return json.dumps({'success': P.name_hash})
+	return P.name_hash
 
 
 @app.route("/project/<project_hash>", methods=['GET'])
@@ -192,14 +200,14 @@ def open_project(project_hash):
 @cookie_login_json
 def tree(project_hash):
 	P = request.user.get_project(project_hash)
-	return json.dumps({'success': P.get_file_struct_dict()})
+	return P.get_file_struct_dict()
 
 
 @app.route("/project/<project_hash>/properties", methods=['GET'])
 @cookie_login_json
 def properties(project_hash):
 	P = request.user.get_project(project_hash)
-	return json.dumps({'success': P.get_properties()})
+	return P.get_properties()
 
 
 @app.route("/project/<project_hash>/file/new", methods=['POST'])
@@ -214,7 +222,7 @@ def new_file(project_hash):
 		raise NotImplementedError("support for file type not implemented")
 
 	res = P.new_file(data['path'], name)
-	return json.dumps({'success': res})
+	return res
 
 
 @app.route("/project/<project_hash>/file/src", methods=['POST'])
@@ -223,7 +231,7 @@ def file_src(project_hash):
 	P = request.user.get_project(project_hash)
 	data = request.json
 	path = str(data['path']).strip()
-	return json.dumps({'success': P.get_file_src(path)})
+	return P.get_file_src(path)
 
 
 @app.route("/project/<project_hash>/file/save", methods=['POST'])
@@ -232,7 +240,7 @@ def save_file(project_hash):
 	P = request.user.get_project(project_hash)
 	data = request.json
 	res = P.save_file(data['path'], data['src'])
-	return json.dumps({'success': res})
+	return res
 
 
 @app.route("/project/<project_hash>/file/delete", methods=['POST'])
@@ -241,7 +249,7 @@ def delete_file(project_hash):
 	P = request.user.get_project(project_hash)
 	data = request.json
 	res = P.delete_file(data['path'])
-	return json.dumps({'success': res})
+	return res
 
 
 
@@ -253,7 +261,7 @@ def new_folder(project_hash):
 	name = str(data['name']).strip()
 
 	res = P.new_folder(data['path'], name)
-	return json.dumps({'success': res})
+	return res
 
 
 @app.route("/project/<project_hash>/folder/delete", methods=['POST'])
@@ -261,7 +269,7 @@ def new_folder(project_hash):
 def delete_folder(project_hash):
 	P = request.user.get_project(project_hash)
 	res = P.delete_folder(request.json['path'])
-	return json.dumps({'success': res})
+	return res
 
 
 @app.route("/project/<project_hash>/rename", methods=['POST'])
@@ -272,8 +280,17 @@ def rename(project_hash):
 	name = str(data['name']).strip()
 
 	res = P.rename(data['path'], name)
-	return json.dumps({'success': res})
+	return res
 
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+@app.route("/project/<project_hash>/entry-points", methods=['GET'])
+@cookie_login_json
+def all_entrypoints(project_hash):
+	P = request.user.get_project(project_hash)
+	return P.get_all_entry_points()
 
 
 @app.route("/project/<project_hash>/entry-point/new", methods=['POST'])
@@ -285,7 +302,7 @@ def new_entrypoint(project_hash):
 	func = str(data['func']).strip()
 	is_default = data.get('make_default', False)
 	P.create_entry_point(file, func, is_default=is_default)
-	return json.dumps({'success': P.get_all_entry_points()})
+	return P.get_all_entry_points()
 
 
 @app.route("/project/<project_hash>/entry-point/delete", methods=['POST'])
@@ -294,12 +311,39 @@ def delete_entrypoint(project_hash):
 	P = request.user.get_project(project_hash)
 	epid = request.json['epid']
 	P.delete_entry_point(epid)
-	return json.dumps({'success': True})
+	return True
 
+
+@app.route("/project/<project_hash>/schedule/new", methods=['POST'])
+@cookie_login_json
+def new_schedule(project_hash):
+	P = request.user.get_project(project_hash)
+	data = request.json
+	epid = str(data['epid']).strip()
+	every = str(data['every']).strip()
+	at = str(data['at']).strip()
+	tzname = data.get('tzname', None)
+	P.create_schedule(epid, every, at, tzname)
+	return P.get_full_schedule()
+
+
+@app.route("/project/<project_hash>/schedule/delete", methods=['POST'])
+@cookie_login_json
+def delete_schedule(project_hash):
+	P = request.user.get_project(project_hash)
+	epid = request.json['epid']
+	sched_id = request.json['sched_id']
+	P.delete_schedule(epid, sched_id)
+	return True
+
+
+
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 
 @app.route("/project/<project_hash>/run", methods=['POST'])
-@cookie_login_json
+@cookie_login_stream
 def run(project_hash):
 	# print(app.url_map)
 	P = request.user.get_project(project_hash)

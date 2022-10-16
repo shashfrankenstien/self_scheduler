@@ -3,6 +3,7 @@ import importlib
 import fnmatch, glob
 import traceback
 from datetime import datetime as dt
+from dateutil import tz
 import threading
 import re
 import sqlite3
@@ -119,6 +120,9 @@ class Project(DB):
             fetch_one=True
         )
 
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    # =-=-=-=-=-=-=-=-=-=  Properties  =-=-=-=-=-=-=-=-=-=-=-=
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     def create_entry_point(self, file, func, is_default: bool=False):
         src_dict = self.get_file_src(path=file)
@@ -193,6 +197,37 @@ class Project(DB):
         return [ep._asdict() for ep in eps]
 
 
+
+    def create_schedule(self, epid, every, at, tzname=None):
+        self.get_entry_point(epid) # will raise error if epid not found
+        conn = self.get_connection()
+        tztest = tz.gettz(tzname)
+        if tztest is None:
+            raise ValueError(f"unknown timezone '{tzname}'")
+        try:
+            self.execute(f'''
+                INSERT INTO schedule (
+                    ep_id, every, at, tzname, create_dt
+                )
+                VALUES (
+                    {epid}, '{every}', '{at}', {"'"+ tzname + "'" if tzname else 'NULL'},
+                    '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}'
+                );
+            ''', conn=conn)
+            conn.commit()
+        except sqlite3.IntegrityError as e:
+            if 'unique constraint failed' in str(e).lower():
+                raise Exception("Schedule already exists") from e
+            raise
+        finally:
+            conn.close()
+
+
+    def delete_schedule(self, epid, sched_id):
+        self.get_entry_point(epid) # will raise error if epid not found
+        self.execute(f'''DELETE FROM schedule WHERE ep_id = {epid} AND id = {sched_id};''')
+
+
     def get_full_schedule(self):
         scheds = self.execute(f'''
             SELECT
@@ -218,6 +253,8 @@ class Project(DB):
             'schedule': self.get_full_schedule(),
         }
 
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     def _get_file_dict(self, path):
         '''

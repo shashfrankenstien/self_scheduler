@@ -75,10 +75,12 @@ class SelfSchedulerDB(DB):
                 ep_id INTEGER NOT NULL,
                 every TEXT DEFAULT NULL,
                 at TEXT DEFAULT NULL,
+                tzname TEXT DEFAULT NULL,
                 is_scheduled INTEGER DEFAULT 0,
                 last_run_dt TEXT DEFAULT NULL,
                 last_run_res TEXT DEFAULT NULL,
                 create_dt TEXT NOT NULL,
+                UNIQUE(ep_id, every, at, tzname),
                 FOREIGN KEY(ep_id) REFERENCES entry_points(id) ON DELETE CASCADE
             )
         ''', conn=conn)

@@ -67,26 +67,30 @@
 
 
 
-#project-props-modal .entry-point-row,
-#project-props-modal .entry-point-header {
+#project-props-modal .props-row,
+#project-props-modal .props-header {
     width: 100%;
     display: grid;
     grid-template-columns: 3fr 1fr 1fr 1fr;
     gap: 1rem;
 }
 
-#project-props-modal .entry-point-row > * {
+#project-props-modal .schedule-row,
+#project-props-modal .schedule-header {
+    grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
+}
+
+#project-props-modal .props-row > * {
     border: 1px solid var(--light-border-color);
     padding: 0.5rem;
     border-radius: 0.2rem;
     margin-bottom: 0.5rem;
 }
 
-#project-props-modal .entry-point-header > * {
+#project-props-modal .props-header > * {
     margin: 0;
     padding: 0.3rem;
 }
-
 
 
 .new-property-modal {
@@ -99,10 +103,12 @@
     width: 75%;
 }
 
-.new-property-modal > input {
+.new-property-modal > input,
+.new-property-modal > select {
     background-color: var(--bg-color);
     border: 1px solid black;
     color: white;
+    width: 100%;
 }
 
 .new-property-modal > * {

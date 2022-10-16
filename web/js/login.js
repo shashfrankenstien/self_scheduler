@@ -5,19 +5,19 @@ const LoginModal = new Modal(document.getElementById("login-box"), {
     height:'300px',
     noCloseBtn: true,
     noFade:true,
-    css: {
-        backgroundColor: "transparent",
-    }
+    classList: ['theme-modal-container'],
+    // transitionStartPos: {top:'-20%'},
+    transitionStartPos: {left:'-10%'},
 })
 const SignupModal = new Modal(document.getElementById("signup-box"), {
     displayStyle:'flex',
     width:'350px',
-    height:'450px',
+    height:'425px',
     noCloseBtn: true,
     noFade:true,
-    css: {
-        backgroundColor: "transparent",
-    }
+    classList: ['theme-modal-container'],
+    // transitionStartPos: {top:'20%'},
+    transitionStartPos: {left:'10%'},
 })
 
 

@@ -50,3 +50,16 @@ const AlertModal = new ModalAlert({
 const ConfirmModal = new ModalConfirm({
     classList: ['theme-modal-container']
 })
+
+
+function createElementFromHTML(htmlString) {
+    var div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+    return div.firstChild;
+}
+
+function createElementsFromHTML(htmlString) {
+    var div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+    return div.childNodes; // support multiple top-level nodes.
+}

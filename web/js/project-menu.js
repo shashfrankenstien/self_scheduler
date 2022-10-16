@@ -1,7 +1,7 @@
 
-
-const projectPropsModal = new ModalDrawerRight(document.getElementById("project-props-modal"), {
-    width: '500px',
+// try ModalDrawerRight
+const projectPropsModal = new Modal(document.getElementById("project-props-modal"), {
+    width: '700px',
     height: '500px',
     displayStyle: 'flex',
     classList: ['theme-modal-container'],
@@ -21,6 +21,14 @@ const newEntryPointModal = new Modal(document.getElementById("new-entry-point-mo
     classList: ['theme-modal-container'],
 })
 
+const newSchedModal = new Modal(document.getElementById("new-schedule-modal"), {
+    width: '350px',
+    height: '325px',
+    displayStyle: 'flex',
+    classList: ['theme-modal-container'],
+})
+
+
 
 const RUN_EP = (epid) => {
     projectPropsModal.close()
@@ -32,18 +40,10 @@ const displayEntryPoints = (eps, epElem) => {
     epElem = epElem || document.getElementById("entry-points")
     if(epElem) {
         epElem.innerHTML = ""
-        // const headers = document.createElement("div")
-        // headers.classList.add("entry-point-header")
-        // headers.innerHTML = `
-        //     <span>Name</span>
-        //     <span>File</span>
-        //     <span>Function</span>
-        // `
-        // epElem.appendChild(headers)
 
         for (const ep of eps) {
             const container = document.createElement("div")
-            container.classList.add("entry-point-row")
+            container.classList.add("props-row", "entry-point-row")
             container.innerHTML = `
                 <span>${ep.name}</span>
                 <span>${ep.is_default ? "Default": "-"}</span>
@@ -55,6 +55,51 @@ const displayEntryPoints = (eps, epElem) => {
 
         epElem.innerHTML = epElem.innerHTML + `
             <button class="gen-btn new-entry-btn" onclick="newEntryPointModal.open()">&plus;</button>`
+    }
+}
+
+const displaySchedule = (sched, schedElem) => {
+    schedElem = schedElem || document.getElementById("schedule")
+    if(schedElem) {
+        schedElem.innerHTML = ""
+        const headers = document.createElement("div")
+        headers.classList.add("props-header", "schedule-header")
+        headers.innerHTML = `
+            <span>Entry Point Name</span>
+            <span>Every</span>
+            <span>At</span>
+            <span>Timezone</span>
+        `
+        schedElem.appendChild(headers)
+
+        for (const sch of sched) {
+            const container = document.createElement("div")
+            container.classList.add("props-row", "schedule-row")
+            container.innerHTML = `
+                <span>${sch.name}</span>
+                <span>${sch.every}</span>
+                <span>${sch.at}</span>
+                <span>${sch.tzname}</span>
+                <button onclick="deleteSchedule(${sch.ep_id}, ${sch.id}, this)" class="gen-btn" >Delete</button>
+            `
+            schedElem.appendChild(container)
+        }
+
+        const newSchedBtn = createElementFromHTML(`<button class="gen-btn new-entry-btn">&plus;</button>`)
+        newSchedBtn.onclick = () => {
+            API.getEntryPoints().then(eps=>{
+                newSchedModal.open().then(content=>{
+                    const eps_dropdown = content.querySelector('select[name="epid"]')
+                    for (const ep of eps) {
+                        const opt = createElementFromHTML(`<option value="${ep.id}">${ep.name}</option>`)
+                        if (ep.is_default) opt.selected = true
+                        eps_dropdown.appendChild(opt)
+                    }
+                })
+            })
+        }
+        schedElem.appendChild(newSchedBtn)
+
     }
 }
 
@@ -80,17 +125,41 @@ const deleteEntryPoint = (epid, btn) => {
             }).catch(err=>AlertModal.open(err))
         }
     )
-
 }
+
+
+const addNewSchedule = (btn) => {
+    const epid = btn.parentElement.querySelector('select[name="epid"]').value.trim()
+    const every = btn.parentElement.querySelector('input[name="every"]').value.trim()
+    const at = btn.parentElement.querySelector('input[name="at"]').value.trim()
+    let tzname = btn.parentElement.querySelector('input[name="tzname"]').value.trim()
+    tzname = (tzname==='') ? null : tzname
+    API.newSchedule(epid, every, at, tzname).then(res=>{
+        displaySchedule(res)
+        newSchedModal.close()
+    }).catch(err=>AlertModal.open(err))
+}
+
+
+const deleteSchedule = (epid, sched_id, btn) => {
+    ConfirmModal.open("Are you sure you want to delete this schedule?",
+        ()=>{
+            API.deleteSchedule(epid, sched_id).then(()=>{
+                btn.parentElement.remove()
+            }).catch(err=>AlertModal.open(err))
+        }
+    )
+}
+
 
 
 const openProjectProperties = () => {
     projectPropsModal.open().then(popup=>{
         API.getProperties().then(props=>{
             console.log(props)
-            const epElem = popup.querySelector("#entry-points")
-            displayEntryPoints(props.entry_points, epElem)
-            // displaySchedule(props.schedule, epElem)
+            // const epElem = popup.querySelector("#entry-points")
+            displayEntryPoints(props.entry_points)
+            displaySchedule(props.schedule)
         })
     })
 }

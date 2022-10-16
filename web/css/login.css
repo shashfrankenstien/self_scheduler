@@ -7,7 +7,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top:40px;
+    padding-top: 2.5rem;
     background-color: var(--editor-theme-bg);
     color: white;
 }
@@ -16,17 +16,17 @@ body {
 .login-signup-box button,
 .login-signup-box h3 {
     width: 60%;
-    padding: 5px;
+    padding: 0.4rem;
 }
 .login-signup-box input {
-    margin: 10px;
+    margin: 0.5rem;
     background-color: var(--bg-color);
     color: white;
     border: 1px solid black;
 }
 .login-signup-box a,
 .login-signup-box button {
-    margin-top: 15px;
+    margin-top: 1rem;
     background-color: var(--editor-theme-bg);
     color: white;
     cursor: pointer;
@@ -35,8 +35,10 @@ body {
 .login-signup-box button {
     border: 1px solid grey;
     background-color: var(--tree-node-bg-selected);
-    transition: 0.1s;
+    transition: 0.1s ease-in;
 }
 .login-signup-box button:hover {
-    width: 65%;
+    background-color: var(--tree-node-bg-selected) !important;
+    box-shadow: var(--button-hover-shadow) !important;
+    border-color: transparent !important;
 }

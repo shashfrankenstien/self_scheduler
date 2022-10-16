@@ -16,8 +16,7 @@ class SS_Project_API {
 
     newFile(path, name) {
         return modFetch(`/project/${this.project}/file/new`, "POST", {
-            path,
-            name
+            path, name
         })
     }
 
@@ -40,8 +39,7 @@ class SS_Project_API {
 
     newFolder(path, name) {
         return modFetch(`/project/${this.project}/folder/new`, "POST", {
-            path,
-            name
+            path, name
         })
     }
 
@@ -53,24 +51,36 @@ class SS_Project_API {
 
     rename(path, name) {
         return modFetch(`/project/${this.project}/rename`, "POST", {
-            path,
-            name
+            path, name
         })
     }
 
 
+    getEntryPoints() {
+        return modFetch(`/project/${this.project}/entry-points`, "GET")
+    }
 
     newEntryPoint(file, func, make_default) {
         return modFetch(`/project/${this.project}/entry-point/new`, "POST", {
-            file,
-            func,
-            make_default
+            file, func, make_default
         })
     }
 
     deleteEntryPoint(epid) {
         return modFetch(`/project/${this.project}/entry-point/delete`, "POST", {epid})
     }
+
+    newSchedule(epid, every, at, tzname) {
+        return modFetch(`/project/${this.project}/schedule/new`, "POST", {
+            epid, every, at, tzname
+        })
+    }
+
+    deleteSchedule(epid, sched_id) {
+        return modFetch(`/project/${this.project}/schedule/delete`, "POST", {epid, sched_id})
+    }
+
+
 
 
     runAsync(epid, msg_cb) {

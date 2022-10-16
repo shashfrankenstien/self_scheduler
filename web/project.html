@@ -61,6 +61,15 @@
     <button onclick="addNewEntryPoint(this)">Save</button>
 </div>
 
+<div class="new-property-modal" id="new-schedule-modal">
+    <span>New Schedule:</span>
+    <select name="epid"></select>
+    <input type="text" name="every" placeholder="Every">
+    <input type="text" name="at" placeholder="At">
+    <input type="text" name="tzname" placeholder="Timezone">
+    <button onclick="addNewSchedule(this)">Save</button>
+</div>
+
 
 <script src="/static/js/utils.js"></script>
 <script src="/static/js/api.js"></script>
