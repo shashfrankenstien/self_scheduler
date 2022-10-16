@@ -9,9 +9,9 @@
     --context-menu-bg: rgb(61, 61, 61);
     /* --context-menu-bg: var(--editor-theme-bg); */
     --context-menu-fg: rgb(255, 255, 255);
-    --context-menu-bg-highlight: rgb(35, 72, 78);
+    --context-menu-bg-highlight: rgb(35, 56, 77);
 
-    --light-border-color: rgb(59, 59, 56);
+    --light-border-color: rgb(65, 65, 62);
     --lighter-border-color: rgb(131, 131, 131);
 
     --button-hover-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -93,37 +93,43 @@ html, body {
     color: var(--tree-node-fg-color) !important;
 }
 
-.theme-modal-container button {
+.theme-modal-container .close-btn {
     background-color: transparent !important;
     color: var(--tree-node-fg-color) !important;
-    border: 1px solid var(--light-border-color);
-    border-radius: 5px;
+    transition: 0.1s ease-in
+}
+
+.theme-modal-container button,
+.gen-btn {
+    background-color: transparent !important;
+    color: var(--tree-node-fg-color) !important;
+    border: 1px solid var(--light-border-color) !important;
+    border-radius: 0.4rem;
+    padding: 0.7rem 1rem;
     outline: none;
     user-select: none;
     cursor: pointer;
     transition: 0.1s ease-in;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.theme-modal-container button:disabled {
+.theme-modal-container button:disabled,
+.gen-btn:disabled {
     cursor: not-allowed;
 }
 
-.theme-modal-container button:focus {
-    border: 1px solid grey;
-}
-.theme-modal-container button:hover:not(:disabled) {
+.theme-modal-container button:focus,
+.gen-btn:focus {
     background-color: var(--tree-node-bg-selected) !important;
-    box-shadow: var(--button-hover-shadow);
-    border-color: transparent !important;
+    /* border: 1px solid grey; */
 }
 
-
-.theme-modal-container .close-btn {
-    background-color: transparent !important;
-    color: var(--tree-node-fg-color) !important;
-    transition: background-color ease-in 0.2s
-}
-
+.theme-modal-container button:hover:not(:disabled),
+.gen-btn:hover:not(:disabled),
 .theme-modal-container .close-btn:hover {
-    background-color: var(--bg-color) !important;
+    background-color: var(--tree-node-bg-selected) !important;
+    box-shadow: var(--button-hover-shadow) !important;
+    border-color: transparent !important;
 }

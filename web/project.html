@@ -31,15 +31,16 @@
         <div class="editor-container">
             <div id="editor" class="editor"></div>
             <div class="output-container" style="display: none;">
-                <button style="position: absolute; top:2px; right:2px;"
+                <button class="gen-btn"
+                    style="position: absolute; top:4px; right:4px;"
                     onclick="closeOutputWindow()"
-                    >close</button>
+                    >x</button>
                 <div id="output"></div>
             </div>
         </div>
     </div>
 
-    <button id="settings-btn" style="position: fixed; bottom:10px;left:10px" onclick="openProjectMenu(event)">Menu</button>
+    <button id="project-menu-btn" class="gen-btn" onclick="openProjectMenu(event)">&#9776;</button>
 </body>
 
 <div style="display: none;" id="project-props-modal">

@@ -7,8 +7,8 @@ import argparse
 from flask import Flask, send_file, request, redirect, make_response, Response
 from itsdangerous import URLSafeSerializer
 
-from models import SelfSchedulerDB
-from models.project import SUPPORTED_LANGUAGES
+from app import SelfSchedulerDB
+from app.project import SUPPORTED_LANGUAGES
 
 
 CWD = os.path.dirname(os.path.abspath(__file__))

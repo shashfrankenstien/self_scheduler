@@ -61,18 +61,9 @@ body {
 
 .top-right-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 10px;
-    border: 1px solid transparent;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.1s ease-in;
-}
-
-.top-right-btn:hover {
-    background-color: var(--editor-theme-bg);
-    box-shadow: var(--button-hover-shadow);
+    top: 0.5rem;
+    right: 0.5rem;
+    border: none !important;
 }
 
 
@@ -88,8 +79,8 @@ body {
 #new-project-modal textarea,
 #new-project-modal button {
     width: 100%;
-    padding: 5px;
-    margin: 10px;
+    padding: .5rem;
+    margin: .5rem;
     background-color: var(--bg-color);
     color: white;
     border: 1px solid black;
@@ -97,14 +88,6 @@ body {
 }
 
 #new-project-modal button {
-    margin-top: 15px;
-    color: white;
-    cursor: pointer;
+    margin-top: 1rem;
     border: 1px solid var(--light-border-color);
-    background-color: var(--tree-node-bg-selected);
-    transition: 0.1s;
-}
-
-#new-project-modal button:hover {
-    width: 105%;
 }

@@ -18,18 +18,6 @@ def main():
 
 '''
 
-# SRC_CONFIG_STARTER = '''
-# [main]
-# file = main.py
-# func = main
-
-# [schedule]
-# every =
-# at =
-# timezone =
-
-# '''
-
 
 SRC_README_STARTER = '''
 Self Scheduler Project
@@ -108,11 +96,6 @@ class Project(DB):
         if not os.path.isfile(main_path):
             with open(main_path, 'w') as m:
                 m.write(SRC_MAIN_PYTHON_STARTER)
-
-        # config_path = os.path.join(self.src_path, 'main.ini')
-        # if not os.path.isfile(config_path):
-        #     with open(config_path, 'w') as m:
-        #         m.write(SRC_CONFIG_STARTER.strip()+'\n')
 
         readme_path = os.path.join(self.src_path, 'README.txt')
         if not os.path.isfile(readme_path):
@@ -321,6 +304,9 @@ class Project(DB):
                 'src': file.read()
             }
 
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # =-=-=-=-=-=-=-=  FS operations  =-=-=-=-=-=-=-=-=-=-=-=-
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     def new_file(self, path, name):
         src = os.path.join(self.src_path, path)
@@ -405,7 +391,9 @@ class Project(DB):
         return True
 
 
-
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    # =-=-=-=-=-=-=-=-=-=-=-=  RUN!  =-=-=-=-=-=-=-=-=-=-=-=-=
+    # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     def _run(self, epid=None):
         self._is_running = True

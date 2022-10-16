@@ -15,7 +15,7 @@ const projectPropsModal = new ModalDrawerRight(document.getElementById("project-
 
 
 const newEntryPointModal = new Modal(document.getElementById("new-entry-point-modal"), {
-    width: '300px',
+    width: '350px',
     height: '280px',
     displayStyle: 'flex',
     classList: ['theme-modal-container'],
@@ -47,14 +47,14 @@ const displayEntryPoints = (eps, epElem) => {
             container.innerHTML = `
                 <span>${ep.name}</span>
                 <span>${ep.is_default ? "Default": "-"}</span>
-                <button ${ep.is_default ? "disabled" : ""} onclick="deleteEntryPoint(${ep.id}, this)">Delete</button>
-                <button onclick="RUN_EP(${ep.id})">Run</button>
+                <button ${ep.is_default ? "disabled" : ""} onclick="deleteEntryPoint(${ep.id}, this)" class="gen-btn" >Delete</button>
+                <button onclick="RUN_EP(${ep.id})" class="gen-btn" >Run</button>
             `
             epElem.appendChild(container)
         }
 
         epElem.innerHTML = epElem.innerHTML + `
-            <button class="new-entry" onclick="newEntryPointModal.open()">&plus;</button>`
+            <button class="gen-btn new-entry-btn" onclick="newEntryPointModal.open()">&plus;</button>`
     }
 }
 
@@ -120,6 +120,11 @@ const openProjectMenu = (ev) => {
     menu.addNewOption("Properties", ()=>{
         openProjectProperties()
         menu.close()
+    })
+
+    menu.addNewOption("Close Project", ()=>{
+        menu.close()
+        window.location = "/"
     })
     menu.open()
 
