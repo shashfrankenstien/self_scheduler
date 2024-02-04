@@ -15,9 +15,10 @@ def namedtuple_factory(cursor, row):
 
 class DB:
 
+    CUSTOM_FUNCS = set()
+
     def __init__(self, db_path) -> None:
         self.db_path = db_path
-
 
     def create_salt(self):
         return hashlib.sha256(str(random.random()).encode()).hexdigest()
@@ -27,9 +28,16 @@ class DB:
         return hashlib.sha256(f"{salt}{password}{salt}".encode()).hexdigest()
 
 
+    @classmethod
+    def add_custom_function(cls, name, nparams, func):
+        cls.CUSTOM_FUNCS.add((name, nparams, func))
+
+
     def get_connection(self):
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = namedtuple_factory
+        for func in self.CUSTOM_FUNCS:
+            conn.create_function(*func)
         return conn
 
 
@@ -40,6 +48,8 @@ class DB:
             created_conn = True
         try:
             cur = conn.cursor()
+            cur.execute('''PRAGMA foreign_keys=ON;''')
+            cur.execute('''PRAGMA journal_mode=WAL;''')
             cur.execute(sql)
             if fetch_one is True:
                 res = cur.fetchone()

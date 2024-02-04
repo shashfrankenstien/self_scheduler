@@ -7,9 +7,12 @@ from dateutil import tz
 import threading
 import re
 import sqlite3
+import queue
 
 from .base import DB
 from .capture import print_capture
+
+from . import ss_sched
 
 
 SRC_MAIN_PYTHON_STARTER = '''
@@ -202,13 +205,7 @@ class Project(DB):
 
 
     def delete_entry_point(self, epid):
-        conn = self.get_connection()
-        try:
-            self.execute("PRAGMA foreign_keys=ON", conn=conn) # required for foreign key cascade on delete
-            self.execute(f'''DELETE FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};''')
-        finally:
-            conn.commit()
-            conn.close()
+        self.execute(f'''DELETE FROM entry_points WHERE project_id = {self.project_id} AND id = {epid};''')
 
 
     def get_entry_point(self, epid=None):
@@ -238,7 +235,8 @@ class Project(DB):
             return []
         return [ep._asdict() for ep in eps]
 
-
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+    # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
     def create_schedule(self, epid, every, at, tzname=None):
         self.get_entry_point(epid) # will raise error if epid not found
@@ -256,6 +254,16 @@ class Project(DB):
                     '{dt.now().strftime('%Y-%m-%d %H:%M:%S')}'
                 );
             ''', conn=conn)
+            sched_id = self.execute('select seq from sqlite_sequence where name="schedule"', conn=conn, fetch_one=True)
+
+            ss_sched.add_job(
+                sched_id=sched_id,
+                every=every,
+                at=at,
+                tz=tzname,
+                func=lambda: self.blocking_run(epid),
+                enabled=False
+            )
             conn.commit()
         except sqlite3.IntegrityError as e:
             if 'unique constraint failed' in str(e).lower():
@@ -263,6 +271,33 @@ class Project(DB):
             raise
         finally:
             conn.close()
+
+
+    def reload_schedules(self):
+        jobs = self.execute(f'''
+            SELECT
+            sched.id,
+            sched.ep_id,
+            sched.every,
+            sched.at,
+            sched.tzname,
+            sched.is_scheduled
+            FROM entry_points ep
+            LEFT JOIN schedule sched
+                ON ep.id = sched.ep_id
+            WHERE ep.project_id = {self.project_id}
+        ''')
+        for j in jobs:
+            if j.id is None:
+                continue
+            ss_sched.add_job(
+                sched_id=j.id,
+                every=j.every,
+                at=j.at,
+                tz=j.tzname,
+                func=lambda: self.blocking_run(j.ep_id),
+                enabled=(True if j.is_scheduled else False)
+            )
 
 
     def delete_schedule(self, epid, sched_id):
@@ -535,14 +570,6 @@ class Project(DB):
                 # err = err.replace(CWD, '')
                 print(err)
 
-    # def run(self): # not used
-    #     msgs = []
-    #     def _cb(msg):
-    #         msgs.append(str(msg))
-
-    #     self._run_print_wrapper(msg_cb=_cb)
-    #     return msgs
-
 
     def create_run_thread(self, epid, msg_queue):
 
@@ -556,3 +583,20 @@ class Project(DB):
         t.daemon = True # makes sure it dies with parent process
         return t
 
+
+    def run_with_progress(self, epid):
+        '''generator that yields progress messages'''
+        msg_queue = queue.Queue()
+        run_thread = self.create_run_thread(epid, msg_queue=msg_queue)
+
+        run_thread.start()
+        while run_thread.is_alive():
+            yield msg_queue.get()
+        while not msg_queue.empty():
+            yield msg_queue.get()
+        run_thread.join()
+
+
+    def blocking_run(self, epid):
+        for msg in self.run_with_progress(epid):
+            print(msg)

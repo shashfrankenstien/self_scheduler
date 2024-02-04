@@ -6,6 +6,16 @@ from datetime import datetime as dt
 from .base import DB
 from .project import Project
 
+from . import ss_sched
+
+
+__SS_DB_SINGLETON = None
+
+def get_ss_db_object(workspace_path):
+    global __SS_DB_SINGLETON
+    if __SS_DB_SINGLETON is None:
+        __SS_DB_SINGLETON = SelfSchedulerDB(workspace_path)
+    return __SS_DB_SINGLETON
 
 
 def email_format_ok(email):
@@ -13,6 +23,10 @@ def email_format_ok(email):
 
 class LoginError(Exception):
     pass
+
+
+# adding a custom function that will be triggered from SQL
+DB.add_custom_function('sched_delete_job', 1, ss_sched.delete_job)
 
 
 class SelfSchedulerDB(DB):
@@ -23,16 +37,15 @@ class SelfSchedulerDB(DB):
         db_path = os.path.join(workspace_path, "inventory.db")
         super().__init__(db_path)
         self.workspace_path = workspace_path
+        self._create_tables()
+        self._reload_jobs()
 
 
-    def create_tables(self):
+    def _create_tables(self):
         conn = self.get_connection()
+        cur = conn.cursor()
 
-        # self.execute('''CREATE DATABASE IF NOT EXISTS self_scheduler;''', conn=conn)
-        self.execute('''PRAGMA foreign_keys=ON;''')
-        self.execute('''PRAGMA journal_mode=WAL;''')
-
-        self.execute('''
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 first_name TEXT NOT NULL,
@@ -40,11 +53,12 @@ class SelfSchedulerDB(DB):
                 email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 salt TEXT NOT NULL,
+                is_admin INTEGER DEFAULT 0,
                 create_dt TEXT NOT NULL
             )
-        ''', conn=conn)
+        ''')
 
-        self.execute('''
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS projects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -54,9 +68,9 @@ class SelfSchedulerDB(DB):
                 create_dt TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
             )
-        ''', conn=conn)
+        ''')
 
-        self.execute('''
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS entry_points (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 project_id INTEGER NOT NULL,
@@ -67,9 +81,9 @@ class SelfSchedulerDB(DB):
                 UNIQUE(project_id, file, func),
                 FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
             )
-        ''', conn=conn)
+        ''')
 
-        self.execute('''
+        cur.execute('''
             CREATE TABLE IF NOT EXISTS schedule (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ep_id INTEGER NOT NULL,
@@ -83,7 +97,29 @@ class SelfSchedulerDB(DB):
                 UNIQUE(ep_id, every, at, tzname),
                 FOREIGN KEY(ep_id) REFERENCES entry_points(id) ON DELETE CASCADE
             )
-        ''', conn=conn)
+        ''')
+
+        cur.execute('''
+            CREATE TRIGGER IF NOT EXISTS sched_delete
+            AFTER DELETE ON schedule
+            BEGIN
+                SELECT sched_delete_job(OLD.id);
+            END;
+        ''')
+
+        conn.commit()
+        conn.close()
+
+
+    def _reload_jobs(self):
+        res = self.execute('''SELECT DISTINCT email FROM users''')
+        for r in res:
+            if r.email is None:
+                continue
+            u = self.get_user(r.email)
+            for p in u.get_all_projects():
+                p.reload_schedules()
+
 
     def user_exists(self, email):
         if not email_format_ok(email):
@@ -184,6 +220,17 @@ class User(DB):
         if res is None:
             raise Exception("Project not found")
         return Project(self.workspace_path, self.db_path, self, res.id, res.name, name_hash, res.descr)
+
+
+    def get_all_projects(self):
+        projects = []
+        res = self.execute(f'''SELECT * FROM projects WHERE user_id = {self.user_id}''')
+        for r in res:
+            if r.id is None:
+                continue
+            p = Project(self.workspace_path, self.db_path, self, r.id, r.name, r.name_hash, r.descr)
+            projects.append(p)
+        return projects
 
 
     def create_new_project(self, name, descr):

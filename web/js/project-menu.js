@@ -47,7 +47,7 @@ const displayEntryPoints = (eps, epElem) => {
             container.innerHTML = `
                 <span>${ep.name}</span>
                 <span>${ep.is_default ? "Default": "-"}</span>
-                <button ${ep.is_default ? "disabled" : ""} onclick="deleteEntryPoint(${ep.id}, this)" class="gen-btn" >Delete</button>
+                <button ${ep.is_default ? "disabled" : ""} onclick="deleteEntryPoint(${ep.id})" class="gen-btn" >Delete</button>
                 <button onclick="RUN_EP(${ep.id})" class="gen-btn" >Run</button>
             `
             epElem.appendChild(container)
@@ -80,7 +80,7 @@ const displaySchedule = (sched, schedElem) => {
                 <span>${sch.every}</span>
                 <span>${sch.at}</span>
                 <span>${sch.tzname}</span>
-                <button onclick="deleteSchedule(${sch.ep_id}, ${sch.id}, this)" class="gen-btn" >Delete</button>
+                <button onclick="deleteSchedule(${sch.ep_id}, ${sch.id})" class="gen-btn" >Delete</button>
             `
             schedElem.appendChild(container)
         }
@@ -104,6 +104,13 @@ const displaySchedule = (sched, schedElem) => {
 }
 
 
+const loadProjectProps = () => {
+    API.getProperties().then(props=>{
+        // console.log(props)
+        displayEntryPoints(props.entry_points)
+        displaySchedule(props.schedule)
+    })
+}
 
 
 const addNewEntryPoint = (btn) => {
@@ -117,11 +124,11 @@ const addNewEntryPoint = (btn) => {
 }
 
 
-const deleteEntryPoint = (epid, btn) => {
+const deleteEntryPoint = (epid) => {
     ConfirmModal.open("Are you sure you want to delete this entry point?",
         ()=>{
             API.deleteEntryPoint(epid).then(()=>{
-                btn.parentElement.remove()
+                loadProjectProps()
             }).catch(err=>AlertModal.open(err))
         }
     )
@@ -141,11 +148,11 @@ const addNewSchedule = (btn) => {
 }
 
 
-const deleteSchedule = (epid, sched_id, btn) => {
+const deleteSchedule = (epid, sched_id) => {
     ConfirmModal.open("Are you sure you want to delete this schedule?",
         ()=>{
             API.deleteSchedule(epid, sched_id).then(()=>{
-                btn.parentElement.remove()
+                loadProjectProps()
             }).catch(err=>AlertModal.open(err))
         }
     )
@@ -155,12 +162,7 @@ const deleteSchedule = (epid, sched_id, btn) => {
 
 const openProjectProperties = () => {
     projectPropsModal.open().then(popup=>{
-        API.getProperties().then(props=>{
-            console.log(props)
-            // const epElem = popup.querySelector("#entry-points")
-            displayEntryPoints(props.entry_points)
-            displaySchedule(props.schedule)
-        })
+        loadProjectProps()
     })
 }
 
