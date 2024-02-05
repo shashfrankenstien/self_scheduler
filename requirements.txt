@@ -1,1 +1,4 @@
+python_dateutil==2.8.2
+Werkzeug==2.1.2
 Flask==2.1.2
+flask-production==2.8.7

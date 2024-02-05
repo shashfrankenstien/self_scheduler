@@ -61,7 +61,11 @@ window.addEventListener('load', ()=>{
 
             proj_container.appendChild(div)
         }
-    }).catch(err=>AlertModal.open(err))
+    }).catch(err=>{
+        AlertModal.open(err, ()=>{
+            window.location = "/login"
+        })
+    })
 })
 
 

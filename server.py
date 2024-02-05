@@ -72,6 +72,7 @@ def set_user_from_cookie():
 	auth = request.cookies.get("Authorization")
 	dec = crypt.loads(auth)
 	request.user = db.get_user(dec['email'])
+	request.user.logged_in = True
 
 
 def cookie_login(f):
@@ -146,7 +147,7 @@ def login():
 
 	data = json.loads(request.data)
 	print(data)
-	u = db.login_user(data.get('email'), data.get('password'))
+	u = db.get_user(data.get('email')).login(data.get('password'))
 	print(u)
 	resp = make_response(json.dumps({'success': True}))
 	set_cookie_token(resp, user=u)

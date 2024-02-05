@@ -1,7 +1,7 @@
 FROM alpine:latest
 
 RUN apk update
-RUN apk add python3 py3-pip make
+RUN apk add python3 python3-dev py3-pip gcc musl-dev linux-headers make
 
 WORKDIR /root/self_scheduler/
 
